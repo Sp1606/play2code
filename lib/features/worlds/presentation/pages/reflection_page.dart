@@ -15,7 +15,7 @@ class ReflectionPage extends StatefulWidget {
 }
 
 class _ReflectionPageState extends State<ReflectionPage> {
-  int _confidenceScore = 3; // Default 3 stars
+  int? _confidenceScore; // Start with no rating preselected (null)
   final TextEditingController _feedbackController = TextEditingController();
   bool _discoveredPattern = false;
 
@@ -27,38 +27,41 @@ class _ReflectionPageState extends State<ReflectionPage> {
 
   String _getReflectionQuestion() {
     switch (widget.gameId) {
-      case 'stack_temple':
+      case 'level_1':
         return 'When you wanted to retrieve a block from the bottom, what did you have to do to the blocks on top of it? Describe the pattern you noticed.';
-      case 'queue_station':
-        return 'What was the relationship between the order passengers arrived in line and the order they got serviced? Is this system "fair"?';
-      case 'treasure_hunt':
-        return 'By checking the middle chest, how many chests were you able to rule out? How did that affect the speed of your hunt compared to checking left-to-right?';
+      case 'level_2':
+        return 'What was the relationship between the order passenger spirits arrived in line and the order they got released into the portal?';
+      case 'level_3':
+        return 'By checking a door in the middle, how did it help you eliminate doors? How does this speed up your search compared to checking one by one?';
+      case 'boss':
       default:
-        return 'Describe the core patterns and problem-solving rules you discovered during this gameplay.';
+        return 'How did you combine these three lock patterns to disable the final guardian locks? What did you learn?';
     }
   }
 
   Future<void> _submitReflection() async {
     final analytics = {
       'gameId': widget.gameId,
-      'confidenceScore': _confidenceScore,
+      'confidenceScore': _confidenceScore ?? 0,
       'reflectionResponse': _feedbackController.text,
       'discoveredPattern': _discoveredPattern,
       'timestamp': DateTime.now().toIso8601String(),
     };
 
-    // Save to Firebase mock
+    // Save to Mock Firebase
     await FirebaseService.instance.submitGameAnalytics(analytics);
 
-    // Route to Theory Reveal Screen
     if (mounted) {
-      context.go('/reveal/${widget.gameId}');
+      if (widget.gameId == 'boss') {
+        context.go('/reveal');
+      } else {
+        context.go('/worlds');
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('POST-GAME REFLECTION'),
@@ -76,7 +79,7 @@ class _ReflectionPageState extends State<ReflectionPage> {
                 children: [
                   Text(
                     'Before we reveal the engineering theory behind these challenges, take a moment to reflect on your gameplay experience. Formulating the pattern yourself helps solidify the concept.',
-                    style: TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 13, height: 1.4),
                   ),
                 ],
               ),
@@ -94,9 +97,10 @@ class _ReflectionPageState extends State<ReflectionPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       final starVal = index + 1;
+                      final isSelected = _confidenceScore != null && starVal <= _confidenceScore!;
                       return IconButton(
                         icon: Icon(
-                          starVal <= _confidenceScore ? Icons.star : Icons.star_border,
+                          isSelected ? Icons.star : Icons.star_border,
                           color: GamingColors.levelColor,
                           size: 36,
                         ),
@@ -109,9 +113,11 @@ class _ReflectionPageState extends State<ReflectionPage> {
                     }),
                   ),
                   Text(
-                    _confidenceScore == 5 
-                        ? 'Master Coder' 
-                        : (_confidenceScore >= 3 ? 'Adept Solver' : 'Novice Explorer'),
+                    _confidenceScore == null
+                        ? 'Select a Rating'
+                        : (_confidenceScore == 5 
+                            ? 'Master Coder' 
+                            : (_confidenceScore! >= 3 ? 'Adept Solver' : 'Novice Explorer')),
                     style: const TextStyle(fontWeight: FontWeight.bold, color: GamingColors.primary),
                   ),
                 ],
@@ -134,7 +140,7 @@ class _ReflectionPageState extends State<ReflectionPage> {
                     controller: _feedbackController,
                     maxLines: 4,
                     decoration: const InputDecoration(
-                      hintText: 'Enter your observations here...',
+                      hintText: 'Enter your observations here (optional)...',
                     ),
                   ),
                 ],
@@ -158,11 +164,11 @@ class _ReflectionPageState extends State<ReflectionPage> {
             ),
             const SizedBox(height: 24),
 
-            // Submit Button
+            // Submit Button (always enabled)
             GameButton(
               width: double.infinity,
-              label: 'SUBMIT REFLECTION & REVEAL THEORY',
-              onPressed: _feedbackController.text.isNotEmpty ? _submitReflection : null,
+              label: widget.gameId == 'boss' ? 'SUBMIT & REVEAL ALL THEORY' : 'SUBMIT & CONTINUE ADVENTURE',
+              onPressed: _submitReflection,
             ),
           ],
         ),

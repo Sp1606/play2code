@@ -1,32 +1,28 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/gaming_colors.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
-import '../../../../core/services/firebase_service.dart';
+import '../../presentation/providers/progress_provider.dart';
 import 'package:go_router/go_router.dart';
 
-class QueueStationPage extends StatefulWidget {
+class QueueStationPage extends ConsumerStatefulWidget {
   const QueueStationPage({super.key});
 
   @override
-  State<QueueStationPage> createState() => _QueueStationPageState();
+  ConsumerState<QueueStationPage> createState() => _QueueStationPageState();
 }
 
-class _QueueStationPageState extends State<QueueStationPage> {
-  int _currentLevel = 1;
-  final List<String> _stationQueue = [];
-  final List<String> _servicedList = [];
-  late List<String> _arrivalList;
+class _QueueStationPageState extends ConsumerState<QueueStationPage> {
+  final List<String> _waitingLine = [];
+  final List<String> _escapedSpirits = [];
+  late List<String> _incomingSpirits;
+
   int _score = 0;
-  int _requiredScore = 5;
-  int _timerSeconds = 30;
-  Timer? _gameTimer;
+  final int _targetScore = 6;
   bool _isGameOver = false;
-  bool _isLevelCleared = false;
-  String? _statusFeedback;
-
-
+  bool _isCleared = false;
+  String? _feedback;
 
   @override
   void initState() {
@@ -34,98 +30,42 @@ class _QueueStationPageState extends State<QueueStationPage> {
     _resetLevel();
   }
 
-  @override
-  void dispose() {
-    _gameTimer?.cancel();
-    super.dispose();
-  }
-
   void _resetLevel() {
-    _stationQueue.clear();
-    _servicedList.clear();
-    _isGameOver = false;
-    _isLevelCleared = false;
+    _waitingLine.clear();
+    _escapedSpirits.clear();
     _score = 0;
-    _statusFeedback = null;
-    _gameTimer?.cancel();
+    _isGameOver = false;
+    _isCleared = false;
+    _feedback = 'Guide the spirits into the energy portal in their exact sequence of arrival.';
 
-    switch (_currentLevel) {
-      case 1:
-        _requiredScore = 5;
-        _arrivalList = ['Student', 'Professor', 'Student', 'Developer', 'Designer'];
-        // Initial queue populate
-        _stationQueue.addAll(['Student', 'Professor']);
-        break;
-      case 2:
-        _requiredScore = 8;
-        _arrivalList = ['Developer', 'Student', 'Professor', 'Designer', 'Student', 'Developer', 'Professor', 'Designer'];
-        _stationQueue.addAll(['Developer', 'Student', 'Professor']);
-        break;
-      case 3:
-        _requiredScore = 10;
-        _arrivalList = ['Designer', 'Developer', 'Student', 'Professor', 'Developer', 'Designer', 'Student', 'Professor', 'Student', 'Developer'];
-        _stationQueue.addAll(['Designer', 'Developer', 'Student', 'Professor']);
-        break;
-      case 4: // Boss Level: Timer active
-        _requiredScore = 8;
-        _arrivalList = ['Developer', 'Professor', 'Student', 'Designer', 'Developer', 'Student', 'Professor', 'Designer'];
-        _stationQueue.addAll(['Developer', 'Professor']);
-        _timerSeconds = 25;
-        _startTimer();
-        break;
-    }
+    // Populate incoming queue stream
+    _incomingSpirits = ['Green Spirit', 'Blue Spirit', 'Orange Spirit', 'Green Spirit', 'Orange Spirit', 'Blue Spirit'];
+    
+    // Spawn first two
+    _waitingLine.add(_incomingSpirits.removeAt(0));
+    _waitingLine.add(_incomingSpirits.removeAt(0));
   }
 
-  void _startTimer() {
-    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      setState(() {
-        if (_timerSeconds > 0) {
-          _timerSeconds--;
-          // Spawn new passenger occasionally in boss level
-          if (_timerSeconds % 4 == 0 && _arrivalList.isNotEmpty && _stationQueue.length < 5) {
-            _spawnPassenger();
-          }
-        } else {
-          _isGameOver = true;
-          _gameTimer?.cancel();
-        }
-      });
-    });
-  }
+  void _serveSpirit(String spirit) {
+    if (_isGameOver || _isCleared || _waitingLine.isEmpty) return;
 
-  void _spawnPassenger() {
-    if (_arrivalList.isEmpty) return;
-    setState(() {
-      final nextPassenger = _arrivalList.removeAt(0);
-      _stationQueue.add(nextPassenger);
-      _statusFeedback = '$nextPassenger joined the back of the queue.';
-    });
-  }
-
-  void _servePassenger(int index) {
-    if (_isGameOver || _isLevelCleared || _stationQueue.isEmpty) return;
+    final firstInLine = _waitingLine.first;
 
     setState(() {
-      if (index != 0) {
-        // Jump queue error! Violation of FIFO
-        _statusFeedback = 'VIOLATION! You cannot serve ${_stationQueue[index]} first. They must wait their turn!';
-        // Penalize moves/timer if boss level
-        if (_currentLevel == 4) {
-          _timerSeconds = (_timerSeconds - 3).clamp(0, 100);
-        }
+      if (spirit != firstInLine) {
+        _feedback = 'REJECTED! The portal repels $spirit. The spirit at the FRONT of the queue must go first!';
         return;
       }
 
-      // Dequeue correct passenger
-      final served = _stationQueue.removeAt(0);
-      _servicedList.add(served);
+      // Dequeue correct spirit
+      _waitingLine.removeAt(0);
+      _escapedSpirits.add(spirit);
       _score++;
-      _statusFeedback = 'Successfully served $served (First In, First Out).';
+      _feedback = 'portal absorbed $spirit (First arrived, first released).';
 
-      // Spawn next from arrival list if available
-      if (_arrivalList.isNotEmpty) {
-        _spawnPassenger();
+      // Pull new spirit into queue
+      if (_incomingSpirits.isNotEmpty) {
+        _waitingLine.add(_incomingSpirits.removeAt(0));
       }
 
       _checkWinCondition();
@@ -133,50 +73,50 @@ class _QueueStationPageState extends State<QueueStationPage> {
   }
 
   void _checkWinCondition() {
-    if (_score >= _requiredScore) {
-      _isLevelCleared = true;
-      _gameTimer?.cancel();
+    if (_score >= _targetScore) {
+      _isCleared = true;
+      _feedback = 'All spirits successfully routed. The portal gate stabilizes!';
       _saveProgress();
     }
   }
 
   Future<void> _saveProgress() async {
-    await FirebaseService.instance.updateGameProgress('queue_station', _currentLevel, _currentLevel == 4);
+    await ref.read(levelProgressProvider.notifier).completeLevel(2);
   }
 
-  void _nextLevel() {
-    if (_currentLevel < 4) {
-      setState(() {
-        _currentLevel++;
-        _resetLevel();
-      });
-    } else {
-      context.go('/reflection/queue_station');
-    }
-  }
-
-  IconData _getPassengerIcon(String type) {
+  IconData _getSpiritIcon(String type) {
     switch (type) {
-      case 'Student':
-        return Icons.school;
-      case 'Professor':
-        return Icons.psychology;
-      case 'Developer':
-        return Icons.code;
-      case 'Designer':
-        return Icons.brush;
+      case 'Green Spirit':
+        return Icons.eco;
+      case 'Blue Spirit':
+        return Icons.water_drop;
+      case 'Orange Spirit':
+        return Icons.local_fire_department;
       default:
         return Icons.person;
     }
   }
 
+  Color _getSpiritColor(String type) {
+    switch (type) {
+      case 'Green Spirit':
+        return GamingColors.accent;
+      case 'Blue Spirit':
+        return GamingColors.primary;
+      case 'Orange Spirit':
+        return GamingColors.warning;
+      default:
+        return GamingColors.textMuted;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('QUEUE STATION - LEVEL $_currentLevel'),
+        title: const Text('LEVEL 2: TEMPLE MEMORY'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/worlds'),
@@ -184,140 +124,204 @@ class _QueueStationPageState extends State<QueueStationPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        key: ValueKey('queue_level_$_currentLevel'),
         child: Column(
           children: [
-            // Instructions
+            // Objective Card
             GameCard(
-              title: _currentLevel == 4 ? 'BOSS QUEST: TICKET BOOTH CONGESTION' : 'STATION INSTRUCTIONS',
-              borderColor: _currentLevel == 4 ? GamingColors.warning : GamingColors.primary,
+              title: 'PORTAL RULES',
+              borderColor: GamingColors.secondary,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Serve passengers at the ticket booth. Passengers MUST be served in the order they arrived in line.',
-                    style: TextStyle(fontSize: 13),
+                    'Release spirits into the portal. The ancient portal operates under a strict "Fair Queue" principle: spirits must leave in the exact order they lined up.',
+                    style: TextStyle(fontSize: 13, height: 1.4),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('SCORE: $_score / $_requiredScore', style: const TextStyle(fontWeight: FontWeight.bold, color: GamingColors.primary)),
-                      if (_currentLevel == 4)
-                        Text('TIME LEFT: $_timerSeconds s', style: const TextStyle(fontWeight: FontWeight.bold, color: GamingColors.error))
-                      else
-                        Text('WAITING OUTSIDE: ${_arrivalList.length}', style: const TextStyle(color: GamingColors.textSecondary)),
-                    ],
+                  const SizedBox(height: 10),
+                  Text(
+                    'ROUTED SPIRITS: $_score / $_targetScore',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: GamingColors.secondary),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Live Queue Area
+            // Entrance Portal (DragTarget)
             Expanded(
-              child: GameCard(
-                title: 'TICKET LINE (FRONT -> BACK)',
-                child: Expanded(
-                  child: _stationQueue.isEmpty
-                      ? const Center(child: Text('Line is empty.'))
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _stationQueue.length,
-                          itemBuilder: (context, index) {
-                            final passenger = _stationQueue[index];
-                            final isFront = index == 0;
+              child: Row(
+                children: [
+                  // Waiting spirits queue
+                  Expanded(
+                    child: GameCard(
+                      title: 'SPIRIT LINE (FRONT -> BACK)',
+                      child: Expanded(
+                        child: _waitingLine.isEmpty
+                            ? const Center(child: Text('No spirits waiting.'))
+                            : ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _waitingLine.length,
+                                itemBuilder: (context, index) {
+                                  final spirit = _waitingLine[index];
+                                  final isFront = index == 0;
+                                  final sColor = _getSpiritColor(spirit);
 
-                            return GestureDetector(
-                              onTap: () => _servePassenger(index),
-                              child: Container(
-                                width: 90,
-                                margin: const EdgeInsets.all(8.0),
-                                decoration: BoxDecoration(
-                                  color: isFront ? GamingColors.primary.withValues(alpha: 0.15) : GamingColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isFront ? GamingColors.primary : GamingColors.surfaceLight,
-                                    width: isFront ? 2 : 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    if (isFront)
-                                      const Chip(
-                                        label: Text('FRONT', style: TextStyle(fontSize: 8, color: Colors.white)),
-                                        backgroundColor: GamingColors.primary,
-                                        visualDensity: VisualDensity.compact,
+                                  return Draggable<String>(
+                                    data: spirit,
+                                    feedback: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: sColor.withValues(alpha: 0.2),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: sColor, width: 2),
+                                        ),
+                                        child: Icon(_getSpiritIcon(spirit), color: sColor, size: 28),
                                       ),
-                                    Icon(_getPassengerIcon(passenger), size: 32, color: isFront ? GamingColors.primary : GamingColors.textSecondary),
-                                    const SizedBox(height: 8),
-                                    Text(passenger, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      isFront ? 'SERVE ME' : 'WAITING',
-                                      style: TextStyle(fontSize: 10, color: isFront ? GamingColors.primary : GamingColors.textMuted),
                                     ),
-                                  ],
-                                ),
+                                    childWhenDragging: Opacity(
+                                      opacity: 0.3,
+                                      child: _buildSpiritItem(spirit, isFront),
+                                    ),
+                                    child: _buildSpiritItem(spirit, isFront),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Feedback Panel
-            if (_statusFeedback != null)
+            // Portal drop zone
+            DragTarget<String>(
+              onAcceptWithDetails: (details) => _serveSpirit(details.data),
+              builder: (context, candidateData, rejectedData) {
+                final isOver = candidateData.isNotEmpty;
+
+                return Container(
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isOver ? GamingColors.secondary.withValues(alpha: 0.1) : GamingColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isOver ? GamingColors.secondary : GamingColors.surfaceLight,
+                      width: 2.5,
+                    ),
+                    boxShadow: isOver
+                        ? [
+                            BoxShadow(
+                              color: GamingColors.secondary.withValues(alpha: 0.25),
+                              blurRadius: 15,
+                            )
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.radar,
+                          size: 40,
+                          color: isOver ? GamingColors.secondary : GamingColors.textMuted,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isOver ? 'RELEASE SPIRIT NOW!' : 'DRAG FRONT SPIRIT HERE',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: isOver ? GamingColors.secondary : GamingColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Feedback Card
+            if (_feedback != null)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: _statusFeedback!.startsWith('VIOLATION') 
-                      ? GamingColors.error.withValues(alpha: 0.1) 
-                      : GamingColors.accent.withValues(alpha: 0.1),
+                  color: _isCleared 
+                      ? GamingColors.accent.withValues(alpha: 0.1) 
+                      : (_feedback!.startsWith('REJECTED') ? GamingColors.error.withValues(alpha: 0.1) : GamingColors.secondary.withValues(alpha: 0.05)),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: _statusFeedback!.startsWith('VIOLATION') ? GamingColors.error : GamingColors.accent,
+                    color: _isCleared ? GamingColors.accent : (_feedback!.startsWith('REJECTED') ? GamingColors.error : GamingColors.secondary.withValues(alpha: 0.3)),
                   ),
                 ),
                 child: Text(
-                  _statusFeedback!,
+                  _feedback!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _statusFeedback!.startsWith('VIOLATION') ? GamingColors.error : GamingColors.accent,
-                    fontWeight: FontWeight.bold,
                     fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: _isCleared ? GamingColors.accent : (_feedback!.startsWith('REJECTED') ? GamingColors.error : GamingColors.secondary),
                   ),
                 ),
               ),
 
-            // Game End State Controllers
-            if (_isLevelCleared)
-              _buildSuccessCard(theme)
+            // Controls
+            if (_isCleared)
+              _buildSuccessCard()
             else if (_isGameOver)
-              _buildFailureCard(theme)
+              _buildFailureCard()
             else
-              GameCard(
-                title: 'TICKET BOOTH INSTRUCTIONS',
-                child: const Center(
-                  child: Text(
-                    'Tap the passenger at the FRONT of the queue to serve them tickets.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: GamingColors.textSecondary, fontSize: 13),
-                  ),
-                ),
-              ),
+              const SizedBox.shrink(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSuccessCard(ThemeData theme) {
+  Widget _buildSpiritItem(String spirit, bool isFront) {
+    final sColor = _getSpiritColor(spirit);
+    return Container(
+      width: 80,
+      margin: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: isFront ? sColor.withValues(alpha: 0.1) : GamingColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isFront ? sColor : GamingColors.surfaceLight,
+          width: isFront ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (isFront)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: sColor, borderRadius: BorderRadius.circular(4)),
+              child: const Text('FRONT', style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          const SizedBox(height: 4),
+          Icon(_getSpiritIcon(spirit), size: 28, color: isFront ? sColor : GamingColors.textSecondary),
+          const SizedBox(height: 4),
+          Text(
+            spirit.split(' ')[0],
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuccessCard() {
     return GameCard(
       borderColor: GamingColors.accent,
       child: Row(
@@ -326,14 +330,14 @@ class _QueueStationPageState extends State<QueueStationPage> {
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('QUEUE RESOLVED!', style: TextStyle(fontWeight: FontWeight.w900, color: GamingColors.accent, fontSize: 16)),
-              Text('All passengers served in order.', style: TextStyle(fontSize: 12)),
+              Text('PORTAL CLEAR!', style: TextStyle(fontWeight: FontWeight.w900, color: GamingColors.accent, fontSize: 15)),
+              Text('All spirits resolved in exact order.', style: TextStyle(fontSize: 12)),
             ],
           ),
           GameButton(
             height: 38,
-            label: _currentLevel == 4 ? 'REVEAL PATTERN' : 'NEXT STAGE',
-            onPressed: _nextLevel,
+            label: 'LEAVE ROOM',
+            onPressed: () => context.go('/reflection/level_2'),
             color: GamingColors.accent,
           ),
         ],
@@ -341,7 +345,7 @@ class _QueueStationPageState extends State<QueueStationPage> {
     );
   }
 
-  Widget _buildFailureCard(ThemeData theme) {
+  Widget _buildFailureCard() {
     return GameCard(
       borderColor: GamingColors.error,
       child: Row(
@@ -350,14 +354,14 @@ class _QueueStationPageState extends State<QueueStationPage> {
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('TIME EXPIRED!', style: TextStyle(fontWeight: FontWeight.w900, color: GamingColors.error, fontSize: 16)),
-              Text('Queue congestion got too high.', style: TextStyle(fontSize: 12)),
+              Text('CONGESTION FAIL', style: TextStyle(fontWeight: FontWeight.w900, color: GamingColors.error, fontSize: 15)),
+              Text('Queue congestion grew too high.', style: TextStyle(fontSize: 12)),
             ],
           ),
           GameButton(
             height: 38,
             label: 'TRY AGAIN',
-            onPressed: () => setState(_resetLevel),
+            onPressed: _resetLevel,
             color: GamingColors.error,
           ),
         ],

@@ -4,23 +4,77 @@ import '../../../../core/theme/gaming_colors.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
-import '../../../../core/widgets/animated_progress_bar.dart';
+import '../../../worlds/presentation/providers/progress_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
+  int _getActiveLevel(Map<int, String> progress) {
+    for (int i = 1; i <= 4; i++) {
+      if (progress[i] != 'Completed') {
+        return i;
+      }
+    }
+    return 4; // Default to boss if all completed
+  }
+
+  String _getLevelTitle(int index) {
+    switch (index) {
+      case 1:
+        return 'Level 1: The Lost Stones';
+      case 2:
+        return 'Level 2: Temple Memory';
+      case 3:
+        return 'Level 3: Trap Escape';
+      case 4:
+      default:
+        return 'Boss Level: Guardian Escape';
+    }
+  }
+
+  String _getLevelDescription(int index) {
+    switch (index) {
+      case 1:
+        return 'Restore the runic stone column on the altar pedestal. Take care: you can only push stones onto the top or pop them from the top of the stack.';
+      case 2:
+        return 'Ticket and guide the trapped spirits through the portal gates. Ensure they exit in the exact chronological order of their arrival.';
+      case 3:
+        return 'Escape the collapsing hall of 15 doors. Use sensory feedback from each chest room to isolate the escape path with minimal guesses.';
+      case 4:
+      default:
+        return 'Decode the ancient guardian locks! Apply LIFO stacking keys, FIFO queue gates, and binary division maps to slip past the Guardian.';
+    }
+  }
+
+  String _getLevelRoute(int index) {
+    switch (index) {
+      case 1:
+        return '/game/level_1';
+      case 2:
+        return '/game/level_2';
+      case 3:
+        return '/game/level_3';
+      case 4:
+      default:
+        return '/game/boss';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(levelProgressProvider);
+    final activeLevel = _getActiveLevel(progress);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PLAY2CODE ADVENTURE'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shield_outlined, color: GamingColors.primary),
+            icon: const Icon(Icons.shield, color: GamingColors.primary),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Shield defenses fully active!')),
+                const SnackBar(content: Text('Aegis shield active. Guarding algorithms!')),
               );
             },
           ),
@@ -28,35 +82,35 @@ class HomePage extends ConsumerWidget {
       ),
       body: SafeArea(
         child: ResponsiveLayout(
-          mobile: _buildMobileLayout(context),
-          desktop: _buildDesktopLayout(context),
+          mobile: _buildMobileLayout(context, activeLevel, progress),
+          desktop: _buildDesktopLayout(context, activeLevel, progress),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
+  Widget _buildMobileLayout(BuildContext context, int activeLevel, Map<int, String> progress) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
         _buildHeroHeader(context),
         const SizedBox(height: 20),
-        _buildContinueAdventureSection(context),
+        _buildContinueAdventureSection(context, activeLevel),
         const SizedBox(height: 20),
-        _buildCurrentMissionCard(context),
+        _buildCurrentMissionCard(context, activeLevel),
         const SizedBox(height: 20),
-        _buildWorldProgressionCard(context),
+        _buildWorldProgressionCard(context, progress),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
+  Widget _buildDesktopLayout(BuildContext context, int activeLevel, Map<int, String> progress) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left Column: Hero status and Continue button
+          // Left Column
           Expanded(
             flex: 2,
             child: SingleChildScrollView(
@@ -64,20 +118,20 @@ class HomePage extends ConsumerWidget {
                 children: [
                   _buildHeroHeader(context),
                   const SizedBox(height: 20),
-                  _buildContinueAdventureSection(context),
+                  _buildContinueAdventureSection(context, activeLevel),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 24),
-          // Right Column: Active mission and world progress
+          // Right Column
           Expanded(
             flex: 3,
             child: ListView(
               children: [
-                _buildCurrentMissionCard(context),
+                _buildCurrentMissionCard(context, activeLevel),
                 const SizedBox(height: 20),
-                _buildWorldProgressionCard(context),
+                _buildWorldProgressionCard(context, progress),
               ],
             ),
           ),
@@ -95,12 +149,11 @@ class HomePage extends ConsumerWidget {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: GamingColors.primary, width: 2),
+              border: Border.all(color: GamingColors.primary, width: 2.5),
               boxShadow: [
                 BoxShadow(
                   color: GamingColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  spreadRadius: 1,
+                  blurRadius: 8,
                 )
               ],
             ),
@@ -117,8 +170,8 @@ class HomePage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'WELCOME BACK, HERO!',
+                const Text(
+                  'HERO LOBBY',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -130,11 +183,11 @@ class HomePage extends ConsumerWidget {
                 Text(
                   'CodeWarrior',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                const Text(
                   'Rank: Adept Algorithmist (Level 5)',
                   style: TextStyle(fontSize: 11, color: GamingColors.textSecondary),
                 ),
@@ -146,16 +199,15 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContinueAdventureSection(BuildContext context) {
+  Widget _buildContinueAdventureSection(BuildContext context, int activeLevel) {
     return GameCard(
       borderColor: GamingColors.accent,
       glowColor: GamingColors.accent,
-      glowRadius: 15,
+      glowRadius: 16,
       child: Column(
         children: [
           const Text(
-            'Ready to resume your algorithm quest?',
-            textAlign: TextAlign.center,
+            'Resume your quest immediately:',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
@@ -164,7 +216,7 @@ class HomePage extends ConsumerWidget {
             label: 'CONTINUE ADVENTURE',
             icon: Icons.play_arrow,
             width: double.infinity,
-            onPressed: () => context.go('/worlds'),
+            onPressed: () => context.go(_getLevelRoute(activeLevel)),
             color: GamingColors.accent,
           ),
         ],
@@ -172,12 +224,12 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildCurrentMissionCard(BuildContext context) {
+  Widget _buildCurrentMissionCard(BuildContext context, int activeLevel) {
     return GameCard(
       title: 'ACTIVE QUEST',
       borderColor: GamingColors.secondary,
-      actions: [
-        const Icon(Icons.bolt, color: GamingColors.secondary),
+      actions: const [
+        Icon(Icons.shield_outlined, color: GamingColors.secondary),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,32 +242,35 @@ class HomePage extends ConsumerWidget {
                   color: GamingColors.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.landscape, color: GamingColors.secondary),
+                child: const Icon(Icons.explore, color: GamingColors.secondary),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Stack Temple'.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  const Text('Stage 3: The Tower of LIFO', style: TextStyle(fontSize: 11, color: GamingColors.textSecondary)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getLevelTitle(activeLevel).toUpperCase(),
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text('World 1: Fundamental Thinking', style: TextStyle(fontSize: 11, color: GamingColors.textSecondary)),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Objective: Assemble blocks matching the blueprint. Keep in mind: you can only push new blocks or pop off the top of the stack. Retrieve the LIFO scroll to proceed.',
-            style: TextStyle(fontSize: 12, height: 1.4, color: GamingColors.textSecondary),
+          const SizedBox(height: 14),
+          Text(
+            _getLevelDescription(activeLevel),
+            style: const TextStyle(fontSize: 12, height: 1.4, color: GamingColors.textSecondary),
           ),
           const SizedBox(height: 16),
           GameButton(
             width: double.infinity,
             height: 40,
             label: 'LAUNCH QUEST',
-            onPressed: () => context.go('/game/stack_temple'),
+            onPressed: () => context.go(_getLevelRoute(activeLevel)),
             color: GamingColors.secondary,
           ),
         ],
@@ -223,71 +278,64 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildWorldProgressionCard(BuildContext context) {
+  Widget _buildWorldProgressionCard(BuildContext context, Map<int, String> progress) {
     return GameCard(
       title: 'WORLD PROGRESSION',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'WORLD 1: FUNDAMENTAL THINKING',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '66% Complete',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GamingColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const AnimatedProgressBar(
-            progress: 0.66,
-            gradient: GamingColors.xpGradient,
-            height: 10,
+          const Text(
+            'WORLD 1: FUNDAMENTAL THINKING',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5),
           ),
           const SizedBox(height: 16),
-          _buildSubProgressRow('Stack Temple', 1.0, GamingColors.accent),
-          const SizedBox(height: 8),
-          _buildSubProgressRow('Queue Station', 0.5, GamingColors.primary),
-          const SizedBox(height: 8),
-          _buildSubProgressRow('Treasure Hunt', 0.0, GamingColors.textMuted),
+          _buildLevelStatusRow(1, progress[1] ?? 'Not Started'),
+          const SizedBox(height: 10),
+          _buildLevelStatusRow(2, progress[2] ?? 'Not Started'),
+          const SizedBox(height: 10),
+          _buildLevelStatusRow(3, progress[3] ?? 'Not Started'),
+          const SizedBox(height: 10),
+          _buildLevelStatusRow(4, progress[4] ?? 'Not Started'),
         ],
       ),
     );
   }
 
-  Widget _buildSubProgressRow(String title, double value, Color accentColor) {
+  Widget _buildLevelStatusRow(int levelIndex, String status) {
+    Color statusColor;
+    switch (status) {
+      case 'Completed':
+        statusColor = GamingColors.accent;
+        break;
+      case 'In Progress':
+        statusColor = GamingColors.primary;
+        break;
+      default:
+        statusColor = GamingColors.textMuted;
+    }
+
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          flex: 3,
-          child: Text(
-            title,
-            style: const TextStyle(fontSize: 12, color: GamingColors.textSecondary),
-          ),
+        Text(
+          _getLevelTitle(levelIndex),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
-        Expanded(
-          flex: 5,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: value,
-              backgroundColor: GamingColors.surfaceLight,
-              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-              minHeight: 5,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.1),
+            border: Border.all(color: statusColor),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            status.toUpperCase(),
+            style: TextStyle(
+              color: statusColor,
+              fontWeight: FontWeight.w900,
+              fontSize: 9,
+              letterSpacing: 0.5,
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 32,
-          child: Text(
-            '${(value * 100).toInt()}%',
-            textAlign: TextAlign.end,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
           ),
         ),
       ],

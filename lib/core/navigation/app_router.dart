@@ -6,6 +6,7 @@ import '../../features/worlds/presentation/pages/worlds_page.dart';
 import '../../features/worlds/presentation/pages/stack_temple_page.dart';
 import '../../features/worlds/presentation/pages/queue_station_page.dart';
 import '../../features/worlds/presentation/pages/treasure_hunt_page.dart';
+import '../../features/worlds/presentation/pages/boss_level_page.dart';
 import '../../features/worlds/presentation/pages/reflection_page.dart';
 import '../../features/worlds/presentation/pages/reveal_theory_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -54,35 +55,40 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-      path: '/game/stack_temple',
+      path: '/game/level_1',
       builder: (BuildContext context, GoRouterState state) {
         return const StackTemplePage();
       },
     ),
     GoRoute(
-      path: '/game/queue_station',
+      path: '/game/level_2',
       builder: (BuildContext context, GoRouterState state) {
         return const QueueStationPage();
       },
     ),
     GoRoute(
-      path: '/game/treasure_hunt',
+      path: '/game/level_3',
       builder: (BuildContext context, GoRouterState state) {
         return const TreasureHuntPage();
       },
     ),
     GoRoute(
+      path: '/game/boss',
+      builder: (BuildContext context, GoRouterState state) {
+        return const BossLevelPage();
+      },
+    ),
+    GoRoute(
       path: '/reflection/:gameId',
       builder: (BuildContext context, GoRouterState state) {
-        final gameId = state.pathParameters['gameId'] ?? 'stack_temple';
+        final gameId = state.pathParameters['gameId'] ?? 'level_1';
         return ReflectionPage(gameId: gameId);
       },
     ),
     GoRoute(
-      path: '/reveal/:gameId',
+      path: '/reveal',
       builder: (BuildContext context, GoRouterState state) {
-        final gameId = state.pathParameters['gameId'] ?? 'stack_temple';
-        return RevealTheoryPage(gameId: gameId);
+        return const RevealTheoryPage();
       },
     ),
   ],
