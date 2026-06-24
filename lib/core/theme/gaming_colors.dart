@@ -32,4 +32,43 @@ class GamingColors {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Design System - XP Progression Colors & Gradients
+  static const Color xpColor = Color(0xFF00FFCC);
+  static const LinearGradient xpGradient = LinearGradient(
+    colors: [Color(0xFF00F0FF), Color(0xFF00FFCC)],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
+
+  // Design System - Level Highlights
+  static const Color levelColor = Color(0xFFFFD700);
+  static const LinearGradient levelGradient = LinearGradient(
+    colors: [Color(0xFFFF8C00), Color(0xFFFFD700)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Design System - Badge Tier Colors & Gradients
+  static const Color badgeBronze = Color(0xFFCD7F32);
+  static const Color badgeSilver = Color(0xFFC0C0C0);
+  static const Color badgeGold = Color(0xFFFFD700);
+  static const Color badgeDiamond = Color(0xFFB9F2FF);
+  static const Color badgeLegend = Color(0xFFFF007F);
+
+  static const LinearGradient badgeBronzeGradient = LinearGradient(
+    colors: [Color(0xFF8B4513), Color(0xFFCD7F32)],
+  );
+  static const LinearGradient badgeSilverGradient = LinearGradient(
+    colors: [Color(0xFF708090), Color(0xFFC0C0C0)],
+  );
+  static const LinearGradient badgeGoldGradient = LinearGradient(
+    colors: [Color(0xFFFF8C00), Color(0xFFFFD700)],
+  );
+  static const LinearGradient badgeDiamondGradient = LinearGradient(
+    colors: [Color(0xFF00BFFF), Color(0xFFB9F2FF)],
+  );
+  static const LinearGradient badgeLegendGradient = LinearGradient(
+    colors: [Color(0xFF8B008B), Color(0xFFFF007F)],
+  );
 }

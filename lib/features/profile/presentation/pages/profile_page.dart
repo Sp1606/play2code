@@ -4,6 +4,7 @@ import '../../../../core/theme/gaming_colors.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/widgets/badge_widget.dart';
 import '../providers/profile_providers.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -233,28 +234,28 @@ class ProfilePage extends ConsumerWidget {
         'title': 'Hello World',
         'desc': 'Write your first line of code.',
         'icon': Icons.chat_bubble_outline,
-        'color': GamingColors.primary,
+        'tier': BadgeTier.bronze,
       },
       {
         'id': 'RecursionRider',
         'title': 'Recursion Rider',
-        'desc': 'Complete the recursive challenge.',
+        'desc': 'Complete recursive quest.',
         'icon': Icons.repeat,
-        'color': GamingColors.secondary,
+        'tier': BadgeTier.gold,
       },
       {
         'id': 'ArrayAce',
         'title': 'Array Ace',
-        'desc': 'Master arrays and matrixes.',
+        'desc': 'Master matrix operations.',
         'icon': Icons.grid_on,
-        'color': GamingColors.accent,
+        'tier': BadgeTier.diamond,
       },
       {
         'id': 'LoopLegend',
         'title': 'Loop Legend',
-        'desc': 'Traverse loops with zero infinite errors.',
+        'desc': 'Traverse complex loops.',
         'icon': Icons.sync,
-        'color': GamingColors.warning,
+        'tier': BadgeTier.legend,
       }
     ];
 
@@ -270,70 +271,24 @@ class ProfilePage extends ConsumerWidget {
             color: GamingColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: mockBadges.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final badge = mockBadges[index];
-            final hasUnlocked = profile.achievements.contains(badge['id']);
-
-            return Opacity(
-              opacity: hasUnlocked ? 1.0 : 0.4,
-              child: GameCard(
-                borderColor: hasUnlocked ? badge['color'] as Color : GamingColors.surfaceLight,
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (badge['color'] as Color).withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: hasUnlocked ? badge['color'] as Color : GamingColors.surfaceLight,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Icon(
-                        badge['icon'] as IconData,
-                        color: hasUnlocked ? badge['color'] as Color : GamingColors.textMuted,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            badge['title'] as String,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: GamingColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            badge['desc'] as String,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: GamingColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (hasUnlocked)
-                      const Icon(Icons.verified, color: GamingColors.accent, size: 20)
-                    else
-                      const Icon(Icons.lock_outline, color: GamingColors.textMuted, size: 20),
-                  ],
-                ),
-              ),
-            );
-          },
+        const SizedBox(height: 16),
+        Center(
+          child: Wrap(
+            spacing: 24,
+            runSpacing: 24,
+            alignment: WrapAlignment.center,
+            children: mockBadges.map((badge) {
+              final hasUnlocked = profile.achievements.contains(badge['id']);
+              return BadgeWidget(
+                tier: badge['tier'] as BadgeTier,
+                icon: badge['icon'] as IconData,
+                title: badge['title'] as String,
+                description: badge['desc'] as String,
+                isUnlocked: hasUnlocked,
+                size: 70,
+              );
+            }).toList(),
+          ),
         ),
       ],
     );

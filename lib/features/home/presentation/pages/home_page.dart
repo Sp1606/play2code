@@ -4,6 +4,7 @@ import '../../../../core/theme/gaming_colors.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import '../../../../core/widgets/animated_progress_bar.dart';
 import '../providers/home_providers.dart';
 
 class HomePage extends ConsumerWidget {
@@ -142,14 +143,10 @@ class HomePage extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: const LinearProgressIndicator(
-                  value: 0.71,
-                  backgroundColor: GamingColors.surfaceLight,
-                  valueColor: AlwaysStoppedAnimation<Color>(GamingColors.primary),
-                  minHeight: 8,
-                ),
+              const AnimatedProgressBar(
+                progress: 0.71,
+                gradient: GamingColors.xpGradient,
+                height: 8,
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'gaming_colors.dart';
+import 'gaming_theme_extension.dart';
 
 class AppTheme {
   AppTheme._();
@@ -8,6 +9,24 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      extensions: const <ThemeExtension<dynamic>>[
+        GamingThemeExtension(
+          xpColor: GamingColors.xpColor,
+          xpGradient: GamingColors.xpGradient,
+          levelColor: GamingColors.levelColor,
+          levelGradient: GamingColors.levelGradient,
+          badgeBronze: GamingColors.badgeBronze,
+          badgeSilver: GamingColors.badgeSilver,
+          badgeGold: GamingColors.badgeGold,
+          badgeDiamond: GamingColors.badgeDiamond,
+          badgeLegend: GamingColors.badgeLegend,
+          badgeBronzeGradient: GamingColors.badgeBronzeGradient,
+          badgeSilverGradient: GamingColors.badgeSilverGradient,
+          badgeGoldGradient: GamingColors.badgeGoldGradient,
+          badgeDiamondGradient: GamingColors.badgeDiamondGradient,
+          badgeLegendGradient: GamingColors.badgeLegendGradient,
+        ),
+      ],
       primaryColor: GamingColors.primary,
       scaffoldBackgroundColor: GamingColors.background,
       colorScheme: const ColorScheme.dark(
