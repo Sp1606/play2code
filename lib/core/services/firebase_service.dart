@@ -105,31 +105,31 @@ class FirebaseService {
     if (collection == 'worlds') {
       return Stream.value([
         {
-          'id': 'world_1',
-          'title': 'Variables Valley',
-          'description': 'Master declarations, scope, and basic data types.',
-          'totalChallenges': 8,
-          'completedChallenges': 8,
+          'id': 'stack_temple',
+          'title': 'Stack Temple',
+          'description': 'Master LIFO order in block assembly tasks.',
+          'totalChallenges': 4,
+          'completedChallenges': 2,
           'isUnlocked': true,
-          'color': '0xFF00F0FF',
+          'color': '0xFF0284C7',
         },
         {
-          'id': 'world_2',
-          'title': 'Conditionals Canyon',
-          'description': 'Navigate logic gates, if-else trees, and switch cases.',
-          'totalChallenges': 10,
-          'completedChallenges': 6,
+          'id': 'queue_station',
+          'title': 'Queue Station',
+          'description': 'Solve ticket routing using FIFO processing.',
+          'totalChallenges': 4,
+          'completedChallenges': 1,
           'isUnlocked': true,
-          'color': '0xFFB026FF',
+          'color': '0xFF7C3AED',
         },
         {
-          'id': 'world_3',
-          'title': 'Loops Labrynth',
-          'description': 'Break through infinite loops, for, while, and do-while.',
-          'totalChallenges': 12,
+          'id': 'treasure_hunt',
+          'title': 'Treasure Hunt',
+          'description': 'Search sorted chests efficiently using Binary Search division.',
+          'totalChallenges': 4,
           'completedChallenges': 0,
-          'isUnlocked': false,
-          'color': '0xFF39FF14',
+          'isUnlocked': true,
+          'color': '0xFF059669',
         },
       ]);
     }
@@ -142,5 +142,81 @@ class FirebaseService {
     await Future.delayed(const Duration(milliseconds: 400));
     // In production:
     // await FirebaseFirestore.instance.collection(collection).doc(docId).update(data);
+  }
+
+  // ==========================================
+  // Play2Code Custom Progression & Analytics
+  // ==========================================
+
+  // Mock Database State for games in World 1
+  final List<Map<String, dynamic>> _mockGameProgress = [
+    {
+      'gameId': 'stack_temple',
+      'title': 'Stack Temple',
+      'description': 'Master LIFO order in block assembly tasks.',
+      'currentDifficulty': 1,
+      'completedLevels': <int>[],
+      'isBossUnlocked': false,
+      'isCompleted': false,
+    },
+    {
+      'gameId': 'queue_station',
+      'title': 'Queue Station',
+      'description': 'Solve ticket routing using FIFO processing.',
+      'currentDifficulty': 1,
+      'completedLevels': <int>[],
+      'isBossUnlocked': false,
+      'isCompleted': false,
+    },
+    {
+      'gameId': 'treasure_hunt',
+      'title': 'Treasure Hunt',
+      'description': 'Search sorted chests efficiently using Binary Search division.',
+      'currentDifficulty': 1,
+      'completedLevels': <int>[],
+      'isBossUnlocked': false,
+      'isCompleted': false,
+    },
+  ];
+
+  final List<Map<String, dynamic>> _mockAnalyticsLogs = [];
+
+  /// Stream of World 1 games progress
+  Stream<List<Map<String, dynamic>>> watchGameProgress() {
+    return Stream.value(_mockGameProgress);
+  }
+
+  /// Update level completion in Firestore
+  Future<void> updateGameProgress(String gameId, int levelIndex, bool isCompleted) async {
+    debugPrint('Firebase Firestore: Updating progress for game $gameId, completed level: $levelIndex, isCompleted: $isCompleted');
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    final gameIndex = _mockGameProgress.indexWhere((g) => g['gameId'] == gameId);
+    if (gameIndex != -1) {
+      final game = _mockGameProgress[gameIndex];
+      final List<int> completed = List<int>.from(game['completedLevels'] as List);
+      
+      if (!completed.contains(levelIndex)) {
+        completed.add(levelIndex);
+      }
+
+      final isBossUnlocked = completed.contains(1) && completed.contains(2) && completed.contains(3);
+      final nextDifficulty = levelIndex < 4 ? levelIndex + 1 : 4;
+
+      _mockGameProgress[gameIndex] = {
+        ...game,
+        'completedLevels': completed,
+        'isBossUnlocked': isBossUnlocked,
+        'currentDifficulty': nextDifficulty,
+        'isCompleted': isCompleted || completed.contains(4),
+      };
+    }
+  }
+
+  /// Submit Post-Game Analytics to Firestore
+  Future<void> submitGameAnalytics(Map<String, dynamic> analytics) async {
+    debugPrint('Firebase Analytics: Logging user learning data: $analytics');
+    await Future.delayed(const Duration(milliseconds: 500));
+    _mockAnalyticsLogs.add(analytics);
   }
 }

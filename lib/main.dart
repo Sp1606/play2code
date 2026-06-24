@@ -25,7 +25,7 @@ class Play2CodeApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Play2Code',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       routerConfig: appRouter,
     );
   }

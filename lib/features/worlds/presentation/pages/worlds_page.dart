@@ -4,6 +4,7 @@ import '../../../../core/theme/gaming_colors.dart';
 import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/worlds_providers.dart';
 
 class WorldsPage extends ConsumerWidget {
@@ -130,12 +131,7 @@ class WorldsPage extends ConsumerWidget {
                       color: world.isUnlocked ? worldColor : GamingColors.surfaceLight,
                       onPressed: world.isUnlocked
                           ? () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Entering ${world.title}...'),
-                                  backgroundColor: worldColor,
-                                ),
-                              );
+                              context.go('/game/${world.id}');
                             }
                           : null,
                     ),

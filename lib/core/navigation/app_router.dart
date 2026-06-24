@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/home/presentation/pages/home_page.dart';
+import '../../features/home/presentation/pages/algorithm_arena_page.dart';
 import '../../features/worlds/presentation/pages/worlds_page.dart';
+import '../../features/worlds/presentation/pages/stack_temple_page.dart';
+import '../../features/worlds/presentation/pages/queue_station_page.dart';
+import '../../features/worlds/presentation/pages/treasure_hunt_page.dart';
+import '../../features/worlds/presentation/pages/reflection_page.dart';
+import '../../features/worlds/presentation/pages/reveal_theory_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../theme/gaming_colors.dart';
 
@@ -12,6 +18,7 @@ final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/home',
   routes: <RouteBase>[
+    // Main App Shell with Bottom Navigation
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (BuildContext context, GoRouterState state, Widget child) {
@@ -37,6 +44,46 @@ final GoRouter appRouter = GoRouter(
           },
         ),
       ],
+    ),
+
+    // Full Screen Game/Arena Routes (No navigation bar visible)
+    GoRoute(
+      path: '/arena',
+      builder: (BuildContext context, GoRouterState state) {
+        return const AlgorithmArenaPage();
+      },
+    ),
+    GoRoute(
+      path: '/game/stack_temple',
+      builder: (BuildContext context, GoRouterState state) {
+        return const StackTemplePage();
+      },
+    ),
+    GoRoute(
+      path: '/game/queue_station',
+      builder: (BuildContext context, GoRouterState state) {
+        return const QueueStationPage();
+      },
+    ),
+    GoRoute(
+      path: '/game/treasure_hunt',
+      builder: (BuildContext context, GoRouterState state) {
+        return const TreasureHuntPage();
+      },
+    ),
+    GoRoute(
+      path: '/reflection/:gameId',
+      builder: (BuildContext context, GoRouterState state) {
+        final gameId = state.pathParameters['gameId'] ?? 'stack_temple';
+        return ReflectionPage(gameId: gameId);
+      },
+    ),
+    GoRoute(
+      path: '/reveal/:gameId',
+      builder: (BuildContext context, GoRouterState state) {
+        final gameId = state.pathParameters['gameId'] ?? 'stack_temple';
+        return RevealTheoryPage(gameId: gameId);
+      },
     ),
   ],
 );

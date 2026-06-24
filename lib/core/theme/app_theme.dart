@@ -5,10 +5,10 @@ import 'gaming_theme_extension.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       extensions: const <ThemeExtension<dynamic>>[
         GamingThemeExtension(
           xpColor: GamingColors.xpColor,
@@ -29,14 +29,14 @@ class AppTheme {
       ],
       primaryColor: GamingColors.primary,
       scaffoldBackgroundColor: GamingColors.background,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: GamingColors.primary,
         secondary: GamingColors.secondary,
         surface: GamingColors.surface,
         error: GamingColors.error,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: GamingColors.background,
+        backgroundColor: GamingColors.surface,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
@@ -54,11 +54,11 @@ class AppTheme {
         selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         unselectedLabelStyle: TextStyle(fontSize: 11),
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 16,
       ),
       cardTheme: CardThemeData(
         color: GamingColors.surface,
-        elevation: 4,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(

@@ -5,6 +5,7 @@ import '../../../../core/widgets/game_button.dart';
 import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
 import '../../../../core/widgets/animated_progress_bar.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/home_providers.dart';
 
 class HomePage extends ConsumerWidget {
@@ -45,6 +46,8 @@ class HomePage extends ConsumerWidget {
       padding: const EdgeInsets.all(16.0),
       children: [
         _buildStatsSection(context),
+        const SizedBox(height: 20),
+        _buildArenaPromo(context),
         const SizedBox(height: 24),
         _buildChallengesHeader(context),
         const SizedBox(height: 12),
@@ -66,7 +69,13 @@ class HomePage extends ConsumerWidget {
           Expanded(
             flex: 2,
             child: SingleChildScrollView(
-              child: _buildStatsSection(context),
+              child: Column(
+                children: [
+                  _buildStatsSection(context),
+                  const SizedBox(height: 20),
+                  _buildArenaPromo(context),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 24),
@@ -181,6 +190,30 @@ class HomePage extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(color: GamingColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
       ],
+    );
+  }
+
+  Widget _buildArenaPromo(BuildContext context) {
+    return GameCard(
+      title: 'WEEKLY COMPETITION',
+      borderColor: GamingColors.secondary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Compete in this week\'s Heap Rush challenge and climb the global leaderboards!',
+            style: TextStyle(fontSize: 12, color: GamingColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          GameButton(
+            height: 36,
+            width: double.infinity,
+            label: 'ENTER ARENA',
+            onPressed: () => context.go('/arena'),
+            color: GamingColors.secondary,
+          ),
+        ],
+      ),
     );
   }
 
