@@ -6,90 +6,137 @@ import '../../../../core/widgets/game_card.dart';
 import '../../../../core/widgets/responsive_layout.dart';
 import '../../../../core/widgets/animated_progress_bar.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/home_providers.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final challengesState = ref.watch(dailyChallengesProvider);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PLAY2CODE'),
+        title: const Text('PLAY2CODE ADVENTURE'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: GamingColors.primary),
-            onPressed: () {},
+            icon: const Icon(Icons.shield_outlined, color: GamingColors.primary),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Shield defenses fully active!')),
+              );
+            },
           ),
         ],
       ),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => ref.read(dailyChallengesProvider.notifier).loadChallenges(),
-          child: ResponsiveLayout(
-            mobile: _buildMobileLayout(context, challengesState, ref),
-            desktop: _buildDesktopLayout(context, challengesState, ref),
-          ),
+        child: ResponsiveLayout(
+          mobile: _buildMobileLayout(context),
+          desktop: _buildDesktopLayout(context),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(
-    BuildContext context,
-    AsyncValue challengesState,
-    WidgetRef ref,
-  ) {
+  Widget _buildMobileLayout(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        _buildStatsSection(context),
+        _buildHeroHeader(context),
         const SizedBox(height: 20),
-        _buildArenaPromo(context),
-        const SizedBox(height: 24),
-        _buildChallengesHeader(context),
-        const SizedBox(height: 12),
-        _buildChallengesList(context, challengesState, ref),
+        _buildContinueAdventureSection(context),
+        const SizedBox(height: 20),
+        _buildCurrentMissionCard(context),
+        const SizedBox(height: 20),
+        _buildWorldProgressionCard(context),
       ],
     );
   }
 
-  Widget _buildDesktopLayout(
-    BuildContext context,
-    AsyncValue challengesState,
-    WidgetRef ref,
-  ) {
+  Widget _buildDesktopLayout(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Left Column: Hero status and Continue button
           Expanded(
             flex: 2,
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildStatsSection(context),
+                  _buildHeroHeader(context),
                   const SizedBox(height: 20),
-                  _buildArenaPromo(context),
+                  _buildContinueAdventureSection(context),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 24),
+          // Right Column: Active mission and world progress
           Expanded(
             flex: 3,
+            child: ListView(
+              children: [
+                _buildCurrentMissionCard(context),
+                const SizedBox(height: 20),
+                _buildWorldProgressionCard(context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    return GameCard(
+      borderColor: GamingColors.primary,
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: GamingColors.primary, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: GamingColors.primary.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                )
+              ],
+            ),
+            child: const CircleAvatar(
+              radius: 28,
+              backgroundColor: GamingColors.surfaceLight,
+              backgroundImage: NetworkImage(
+                'https://api.dicebear.com/7.x/pixel-art/svg?seed=CodeWarrior',
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildChallengesHeader(context),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: _buildChallengesList(context, challengesState, ref),
+                Text(
+                  'WELCOME BACK, HERO!',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: GamingColors.primary,
+                    letterSpacing: 1.5,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'CodeWarrior',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Rank: Adept Algorithmist (Level 5)',
+                  style: TextStyle(fontSize: 11, color: GamingColors.textSecondary),
                 ),
               ],
             ),
@@ -99,117 +146,76 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GameCard(
-          borderColor: GamingColors.primary,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: GamingColors.surfaceLight,
-                    backgroundImage: const NetworkImage(
-                      'https://api.dicebear.com/7.x/pixel-art/svg?seed=CodeWarrior',
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CodeWarrior',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: GamingColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Level 5 • Pro Coder',
-                        style: TextStyle(color: GamingColors.primary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('XP: 1,420 / 2,000'),
-                  Text(
-                    '71%',
-                    style: TextStyle(
-                      color: GamingColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const AnimatedProgressBar(
-                progress: 0.71,
-                gradient: GamingColors.xpGradient,
-                height: 8,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: GameCard(
-                child: _buildStatItem('STREAK', '7 Days', Icons.local_fire_department, GamingColors.warning),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: GameCard(
-                child: _buildStatItem('COMPLETED', '28 Quest', Icons.emoji_events, GamingColors.accent),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 12),
-        Text(label, style: const TextStyle(color: GamingColors.textMuted, fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: GamingColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildArenaPromo(BuildContext context) {
+  Widget _buildContinueAdventureSection(BuildContext context) {
     return GameCard(
-      title: 'WEEKLY COMPETITION',
+      borderColor: GamingColors.accent,
+      glowColor: GamingColors.accent,
+      glowRadius: 15,
+      child: Column(
+        children: [
+          const Text(
+            'Ready to resume your algorithm quest?',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          GameButton.variant(
+            variant: GameButtonVariant.glowAccent,
+            label: 'CONTINUE ADVENTURE',
+            icon: Icons.play_arrow,
+            width: double.infinity,
+            onPressed: () => context.go('/worlds'),
+            color: GamingColors.accent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentMissionCard(BuildContext context) {
+    return GameCard(
+      title: 'ACTIVE QUEST',
       borderColor: GamingColors.secondary,
+      actions: [
+        const Icon(Icons.bolt, color: GamingColors.secondary),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Compete in this week\'s Heap Rush challenge and climb the global leaderboards!',
-            style: TextStyle(fontSize: 12, color: GamingColors.textSecondary),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: GamingColors.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.landscape, color: GamingColors.secondary),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Stack Temple'.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  const Text('Stage 3: The Tower of LIFO', style: TextStyle(fontSize: 11, color: GamingColors.textSecondary)),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          const Text(
+            'Objective: Assemble blocks matching the blueprint. Keep in mind: you can only push new blocks or pop off the top of the stack. Retrieve the LIFO scroll to proceed.',
+            style: TextStyle(fontSize: 12, height: 1.4, color: GamingColors.textSecondary),
+          ),
+          const SizedBox(height: 16),
           GameButton(
-            height: 36,
             width: double.infinity,
-            label: 'ENTER ARENA',
-            onPressed: () => context.go('/arena'),
+            height: 40,
+            label: 'LAUNCH QUEST',
+            onPressed: () => context.go('/game/stack_temple'),
             color: GamingColors.secondary,
           ),
         ],
@@ -217,154 +223,74 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildChallengesHeader(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'DAILY QUESTS',
-          style: theme.textTheme.titleLarge?.copyWith(
-            letterSpacing: 1.0,
-            fontWeight: FontWeight.w900,
+  Widget _buildWorldProgressionCard(BuildContext context) {
+    return GameCard(
+      title: 'WORLD PROGRESSION',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'WORLD 1: FUNDAMENTAL THINKING',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '66% Complete',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: GamingColors.primary),
+              ),
+            ],
           ),
-        ),
-        const Icon(Icons.bolt, color: GamingColors.primary),
-      ],
+          const SizedBox(height: 10),
+          const AnimatedProgressBar(
+            progress: 0.66,
+            gradient: GamingColors.xpGradient,
+            height: 10,
+          ),
+          const SizedBox(height: 16),
+          _buildSubProgressRow('Stack Temple', 1.0, GamingColors.accent),
+          const SizedBox(height: 8),
+          _buildSubProgressRow('Queue Station', 0.5, GamingColors.primary),
+          const SizedBox(height: 8),
+          _buildSubProgressRow('Treasure Hunt', 0.0, GamingColors.textMuted),
+        ],
+      ),
     );
   }
 
-  Widget _buildChallengesList(
-    BuildContext context,
-    AsyncValue challengesState,
-    WidgetRef ref,
-  ) {
-    return challengesState.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(color: GamingColors.primary),
+  Widget _buildSubProgressRow(String title, double value, Color accentColor) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 12, color: GamingColors.textSecondary),
+          ),
         ),
-      ),
-      error: (err, stack) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text('Error loading challenges: $err'),
+        Expanded(
+          flex: 5,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: value,
+              backgroundColor: GamingColors.surfaceLight,
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              minHeight: 5,
+            ),
+          ),
         ),
-      ),
-      data: (challenges) {
-        if (challenges.isEmpty) {
-          return const Center(child: Text('No challenges today!'));
-        }
-
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: challenges.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) {
-            final challenge = challenges[index];
-            Color difficultyColor;
-            switch (challenge.difficulty.toLowerCase()) {
-              case 'easy':
-                difficultyColor = GamingColors.accent;
-                break;
-              case 'medium':
-                difficultyColor = GamingColors.warning;
-                break;
-              default:
-                difficultyColor = GamingColors.error;
-            }
-
-            return GameCard(
-              borderColor: challenge.isCompleted
-                  ? GamingColors.surfaceLight
-                  : GamingColors.primary.withValues(alpha: 0.3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: difficultyColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: difficultyColor.withValues(alpha: 0.5)),
-                        ),
-                        child: Text(
-                          challenge.difficulty.toUpperCase(),
-                          style: TextStyle(
-                            color: difficultyColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '+${challenge.points} XP',
-                        style: const TextStyle(
-                          color: GamingColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    challenge.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: GamingColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    challenge.description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: GamingColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (challenge.isCompleted)
-                        const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: GamingColors.accent),
-                            SizedBox(width: 4),
-                            Text(
-                              'COMPLETED',
-                              style: TextStyle(
-                                color: GamingColors.accent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        GameButton(
-                          height: 36,
-                          label: 'SOLVE',
-                          onPressed: () {
-                            ref
-                                .read(dailyChallengesProvider.notifier)
-                                .completeChallenge(challenge.id);
-                          },
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 32,
+          child: Text(
+            '${(value * 100).toInt()}%',
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }
