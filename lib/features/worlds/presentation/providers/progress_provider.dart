@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/progress_repository.dart';
+import 'game_state_provider.dart';
 
 class LevelProgressNotifier extends StateNotifier<Map<int, String>> {
-  LevelProgressNotifier() : super({
+  final Ref _ref;
+
+  LevelProgressNotifier(this._ref) : super({
     1: ProgressRepository.statusInProgress,
     2: ProgressRepository.statusNotStarted,
     3: ProgressRepository.statusNotStarted,
@@ -26,8 +29,13 @@ class LevelProgressNotifier extends StateNotifier<Map<int, String>> {
   }
 
   Future<void> completeLevel(int levelIndex) async {
+    final previousStatus = state[levelIndex];
     await ProgressRepository.instance.completeLevel(levelIndex);
     await loadProgress();
+
+    if (previousStatus != ProgressRepository.statusCompleted) {
+      await _ref.read(gameStateProvider.notifier).awardLevelCompletion(levelIndex);
+    }
   }
 
   Future<void> setLevelInProgress(int levelIndex) async {
@@ -40,10 +48,11 @@ class LevelProgressNotifier extends StateNotifier<Map<int, String>> {
 
   Future<void> resetProgress() async {
     await ProgressRepository.instance.resetProgress();
+    await _ref.read(gameStateProvider.notifier).resetState();
     await loadProgress();
   }
 }
 
 final levelProgressProvider = StateNotifierProvider<LevelProgressNotifier, Map<int, String>>((ref) {
-  return LevelProgressNotifier();
+  return LevelProgressNotifier(ref);
 });
