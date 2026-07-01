@@ -219,4 +219,7 @@ class FirebaseService {
     await Future.delayed(const Duration(milliseconds: 500));
     _mockAnalyticsLogs.add(analytics);
   }
+
+  /// Get mock analytics logs
+  List<Map<String, dynamic>> get mockAnalyticsLogs => _mockAnalyticsLogs;
 }
