@@ -36,8 +36,8 @@ class GameState {
 class GameStateNotifier extends StateNotifier<GameState> {
   GameStateNotifier()
       : super(const GameState(
-          coins: 100,
-          gems: 20,
+          coins: 0,
+          gems: 0,
           energy: 5,
           xp: 0,
           level: 1,
@@ -53,8 +53,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   Future<void> loadState() async {
     final prefs = await SharedPreferences.getInstance();
-    final coins = prefs.getInt(_keyCoins) ?? 100;
-    final gems = prefs.getInt(_keyGems) ?? 20;
+    final coins = prefs.getInt(_keyCoins) ?? 0;
+    final gems = prefs.getInt(_keyGems) ?? 0;
     final energy = prefs.getInt(_keyEnergy) ?? 5;
     final xp = prefs.getInt(_keyXp) ?? 0;
     final level = prefs.getInt(_keyLevel) ?? 1;
@@ -162,8 +162,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
     await prefs.remove(_keyLevel);
     
     state = const GameState(
-      coins: 100,
-      gems: 20,
+      coins: 0,
+      gems: 0,
       energy: 5,
       xp: 0,
       level: 1,

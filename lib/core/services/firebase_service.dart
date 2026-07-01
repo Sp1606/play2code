@@ -85,11 +85,11 @@ class FirebaseService {
     if (collection == 'users') {
       return {
         'uid': 'mock_user_123',
-        'level': 5,
-        'xp': 1420,
-        'rank': 'Pro Coder',
-        'completedWorldsCount': 2,
-        'achievements': ['HelloWorld', 'RecursionRider', 'ArrayAce'],
+        'level': 1,
+        'xp': 0,
+        'rank': 'Novice Coder',
+        'completedWorldsCount': 0,
+        'achievements': <String>[],
       };
     }
     return null;
