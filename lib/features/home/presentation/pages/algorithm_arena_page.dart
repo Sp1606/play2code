@@ -77,14 +77,7 @@ class AlgorithmArenaPage extends StatelessWidget {
             GameButton(
               width: double.infinity,
               label: 'ENTER ARENA CHALLENGE',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Launching Heap Rush Arena editor...'),
-                    backgroundColor: GamingColors.secondary,
-                  ),
-                );
-              },
+              onPressed: () => context.push('/arena/challenge'),
               color: GamingColors.secondary,
             ),
             const SizedBox(height: 24),

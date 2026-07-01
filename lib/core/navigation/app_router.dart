@@ -11,6 +11,7 @@ import '../../features/worlds/presentation/pages/reflection_page.dart';
 import '../../features/worlds/presentation/pages/reveal_theory_page.dart';
 import '../../features/worlds/presentation/pages/play_launcher_page.dart';
 import '../../features/home/presentation/pages/shop_page.dart';
+import '../../features/home/presentation/pages/arena_challenge_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../theme/gaming_colors.dart';
 
@@ -54,6 +55,12 @@ final GoRouter appRouter = GoRouter(
       path: '/arena',
       builder: (BuildContext context, GoRouterState state) {
         return const AlgorithmArenaPage();
+      },
+    ),
+    GoRoute(
+      path: '/arena/challenge',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ArenaChallengePage();
       },
     ),
     GoRoute(

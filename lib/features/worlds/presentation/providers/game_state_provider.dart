@@ -142,6 +142,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
     await _saveState();
   }
 
+  Future<void> addXp(int amount) async {
+    int newXp = state.xp + amount;
+    int newLevel = state.level;
+    while (newXp >= 100) {
+      newXp -= 100;
+      newLevel += 1;
+    }
+    state = state.copyWith(xp: newXp, level: newLevel);
+    await _saveState();
+  }
+
   Future<void> resetState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyCoins);
