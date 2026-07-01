@@ -41,21 +41,9 @@ final GoRouter appRouter = GoRouter(
           },
         ),
         GoRoute(
-          path: '/play',
-          builder: (BuildContext context, GoRouterState state) {
-            return const PlayLauncherPage();
-          },
-        ),
-        GoRoute(
           path: '/profile',
           builder: (BuildContext context, GoRouterState state) {
             return const ProfilePage();
-          },
-        ),
-        GoRoute(
-          path: '/shop',
-          builder: (BuildContext context, GoRouterState state) {
-            return const ShopPage();
           },
         ),
       ],
@@ -66,6 +54,18 @@ final GoRouter appRouter = GoRouter(
       path: '/arena',
       builder: (BuildContext context, GoRouterState state) {
         return const AlgorithmArenaPage();
+      },
+    ),
+    GoRoute(
+      path: '/play',
+      builder: (BuildContext context, GoRouterState state) {
+        return const PlayLauncherPage();
+      },
+    ),
+    GoRoute(
+      path: '/shop',
+      builder: (BuildContext context, GoRouterState state) {
+        return const ShopPage();
       },
     ),
     GoRoute(
@@ -120,9 +120,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/worlds')) return 1;
-    if (location.startsWith('/play')) return 2;
-    if (location.startsWith('/profile')) return 3;
-    if (location.startsWith('/shop')) return 4;
+    if (location.startsWith('/profile')) return 2;
     return 0;
   }
 
@@ -135,13 +133,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         GoRouter.of(context).go('/worlds');
         break;
       case 2:
-        GoRouter.of(context).go('/play');
-        break;
-      case 3:
         GoRouter.of(context).go('/profile');
-        break;
-      case 4:
-        GoRouter.of(context).go('/shop');
         break;
     }
   }
@@ -154,7 +146,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
       body: child,
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        height: 72,
+        height: 64,
         decoration: BoxDecoration(
           color: GamingColors.surface,
           borderRadius: BorderRadius.circular(24),
@@ -164,11 +156,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
-            BoxShadow(
-              color: GamingColors.primary.withValues(alpha: 0.03),
-              blurRadius: 24,
-              offset: const Offset(0, -2),
-            ),
           ],
           border: Border.all(color: GamingColors.surfaceLight, width: 1.5),
         ),
@@ -177,9 +164,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
           children: [
             _buildNavItem(context, index: 0, activeIndex: selectedIndex, icon: Icons.videogame_asset_outlined, activeIcon: Icons.videogame_asset, label: 'Lobby'),
             _buildNavItem(context, index: 1, activeIndex: selectedIndex, icon: Icons.explore_outlined, activeIcon: Icons.explore, label: 'Map'),
-            _buildPlayNavItem(context, index: 2, activeIndex: selectedIndex),
-            _buildNavItem(context, index: 3, activeIndex: selectedIndex, icon: Icons.person_outline, activeIcon: Icons.person, label: 'Hero'),
-            _buildNavItem(context, index: 4, activeIndex: selectedIndex, icon: Icons.storefront_outlined, activeIcon: Icons.storefront, label: 'Shop'),
+            _buildNavItem(context, index: 2, activeIndex: selectedIndex, icon: Icons.person_outline, activeIcon: Icons.person, label: 'Hero'),
           ],
         ),
       ),
@@ -222,42 +207,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPlayNavItem(BuildContext context, {required int index, required int activeIndex}) {
-    final isActive = index == activeIndex;
-    final color = isActive ? GamingColors.accent : GamingColors.primary;
-
-    return GestureDetector(
-      onTap: () => _onItemTapped(index, context),
-      child: Transform.translate(
-        offset: const Offset(0, -10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 52,
-          width: 52,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.35),
-                blurRadius: isActive ? 12 : 8,
-                offset: const Offset(0, 4),
-              )
-            ],
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 32,
-            ),
-          ),
-        ),
       ),
     );
   }

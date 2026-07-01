@@ -20,7 +20,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -76,10 +76,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                 unselectedLabelColor: GamingColors.textMuted,
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 0.5),
                 tabs: const [
-                  Tab(text: 'ATTRIBUTES', icon: Icon(Icons.bolt, size: 18)),
-                  Tab(text: 'BADGE VAULT', icon: Icon(Icons.stars, size: 18)),
-                  Tab(text: 'SCROLLS', icon: Icon(Icons.history_edu, size: 18)),
-                  Tab(text: 'CLAN CORES', icon: Icon(Icons.people, size: 18)),
+                  Tab(text: 'STATS', icon: Icon(Icons.bolt, size: 18)),
+                  Tab(text: 'BADGES', icon: Icon(Icons.stars, size: 18)),
+                  Tab(text: 'HISTORY', icon: Icon(Icons.history_edu, size: 18)),
                 ],
               ),
             ),
@@ -92,7 +91,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
           _buildAttributesTab(context, profile),
           _buildBadgeVaultTab(context, profile),
           _buildReflectionScrollsTab(context, profile),
-          _buildClanCoresTab(context),
         ],
       ),
     );
@@ -128,10 +126,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                   unselectedLabelColor: GamingColors.textMuted,
                   labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                   tabs: const [
-                    Tab(text: 'ATTRIBUTES', icon: Icon(Icons.bolt, size: 20)),
+                    Tab(text: 'STATS', icon: Icon(Icons.bolt, size: 20)),
                     Tab(text: 'BADGE VAULT', icon: Icon(Icons.stars, size: 20)),
-                    Tab(text: 'REFLECTION SCROLLS', icon: Icon(Icons.history_edu, size: 20)),
-                    Tab(text: 'CLAN CORES', icon: Icon(Icons.people, size: 20)),
+                    Tab(text: 'HISTORY LOGS', icon: Icon(Icons.history_edu, size: 20)),
                   ],
                 ),
                 Expanded(
@@ -141,7 +138,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                       _buildAttributesTab(context, profile),
                       _buildBadgeVaultTab(context, profile),
                       _buildReflectionScrollsTab(context, profile),
-                      _buildClanCoresTab(context),
                     ],
                   ),
                 ),
@@ -155,7 +151,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
 
   Widget _buildAvatarCard(BuildContext context, dynamic profile) {
     final theme = Theme.of(context);
-    final xpPercent = (profile.xp % 500) / 500.0; // Assume 500 XP per level
+    final xpPercent = (profile.xp % 500) / 500.0;
 
     return GameCard(
       borderColor: GamingColors.primary,
@@ -452,7 +448,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
   }
 
   Widget _buildReflectionScrollsTab(BuildContext context, dynamic profile) {
-    // Dynamic analytics reflections from FirebaseService + pre-populated logs
     final submittedReflections = FirebaseService.instance.mockAnalyticsLogs;
 
     final List<Map<String, dynamic>> staticScrolls = [
@@ -472,7 +467,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
       },
     ];
 
-    // Map dynamic reflections to matching structure
     final dynamicScrolls = submittedReflections.map((r) => {
       'gameId': r['gameId'] ?? 'unknown',
       'title': (r['gameId'] == 'level_1')
@@ -496,10 +490,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
         final scroll = allScrolls[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
-          color: const Color(0xFF2C2514), // Gold-tinted dark background
+          color: const Color(0xFF2C2514),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5), // Gold outline
+            side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -539,7 +533,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
                   '"${scroll['reflection']}"',
                   style: const TextStyle(
                     fontStyle: FontStyle.italic,
-                    color: Color(0xFFF5DEB3), // Wheat text color
+                    color: Color(0xFFF5DEB3),
                     fontSize: 11,
                     height: 1.4,
                   ),
@@ -549,56 +543,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
           ),
         );
       },
-    );
-  }
-
-  Widget _buildClanCoresTab(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        const Text(
-          'ARENA DIVISIONS & CLAN CORE',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.0),
-        ),
-        const SizedBox(height: 12),
-        GameCard(
-          borderColor: GamingColors.secondary,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.shield_outlined, color: GamingColors.secondary),
-                  SizedBox(width: 8),
-                  Text('WEEKLY DIVISION: GOLD I', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Top 3 progress into Diamond division at weekly reset.',
-                style: TextStyle(fontSize: 11, color: GamingColors.textMuted),
-              ),
-              const Divider(color: Colors.white12, height: 24),
-              _buildLeaderboardRow(1, 'AlgoAce', '980 XP', false),
-              _buildLeaderboardRow(2, 'LIFO_Master', '945 XP', false),
-              _buildLeaderboardRow(3, 'CodeWarrior (YOU)', '890 XP', true),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLeaderboardRow(int rank, String name, String score, bool isSelf) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('#$rank $name', style: TextStyle(fontSize: 11, fontWeight: isSelf ? FontWeight.bold : FontWeight.normal, color: isSelf ? GamingColors.secondary : Colors.white)),
-          Text(score, style: TextStyle(fontSize: 11, fontWeight: isSelf ? FontWeight.bold : FontWeight.normal, color: isSelf ? GamingColors.secondary : Colors.white70)),
-        ],
-      ),
     );
   }
 
