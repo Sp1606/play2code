@@ -162,10 +162,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> with SingleTickerProv
             top: 0,
             child: IconButton(
               icon: const Icon(Icons.logout, color: GamingColors.error, size: 20),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logging out warrior...')),
-                );
+              onPressed: () async {
+                await FirebaseService.instance.signOut();
               },
             ),
           ),

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 /// A service that acts as a placeholder for Firebase Integration.
 /// It outlines where to put real Firebase initialization, Authentication,
@@ -18,11 +18,6 @@ class FirebaseService {
     debugPrint('--- FIREBASE INTEGRATION PLACEHOLDER ---');
     debugPrint('Initializing Firebase SDK...');
     
-    // In production, you would run:
-    // await Firebase.initializeApp(
-    //   options: DefaultFirebaseOptions.currentPlatform,
-    // );
-    
     await Future.delayed(const Duration(milliseconds: 500));
     _isInitialized = true;
     debugPrint('Firebase initialized successfully (Mock mode).');
@@ -32,59 +27,49 @@ class FirebaseService {
   // Authentication Placeholders
   // ==========================================
   
+  /// ValueNotifier holding the current active user authentication state
+  final ValueNotifier<Map<String, dynamic>?> authStateNotifier = ValueNotifier<Map<String, dynamic>?>(null);
+
   /// Stream of Auth State changes
   Stream<Map<String, dynamic>?> get authStateChanges {
-    // Return a dummy stream of authenticated user
-    return Stream.value({
-      'uid': 'mock_user_123',
-      'email': 'player@play2code.edu',
-      'displayName': 'CodeWarrior',
-      'photoUrl': 'https://api.dicebear.com/7.x/pixel-art/svg?seed=CodeWarrior',
+    final controller = StreamController<Map<String, dynamic>?>.broadcast();
+    void listener() {
+      if (!controller.isClosed) {
+        controller.add(authStateNotifier.value);
+      }
+    }
+    authStateNotifier.addListener(listener);
+    // Yield current auth value immediately on listen
+    Timer.run(() {
+      if (!controller.isClosed) {
+        controller.add(authStateNotifier.value);
+      }
     });
+    return controller.stream;
   }
 
   /// Sign In with Email & Password
   Future<Map<String, dynamic>> signIn(String email, String password) async {
     debugPrint('Firebase Auth: Signing in with $email...');
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 600));
     
-    // In production:
-    // UserCredential creds = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-    // return creds.user;
+    final cleanEmail = email.toLowerCase().trim();
+    // Simulate user creation by deriving a unique UID hash
+    final uid = 'user_${cleanEmail.hashCode}';
+    final username = cleanEmail.split('@').first;
     
-    return {
-      'uid': 'mock_user_123',
+    final user = {
+      'uid': uid,
       'email': email,
-      'displayName': 'CodeWarrior',
-      'photoUrl': 'https://api.dicebear.com/7.x/pixel-art/svg?seed=CodeWarrior',
+      'displayName': username,
+      'photoUrl': 'https://api.dicebear.com/7.x/pixel-art/svg?seed=$username',
     };
-  }
 
-  /// Sign Out
-  Future<void> signOut() async {
-    debugPrint('Firebase Auth: Signing out user...');
-    await Future.delayed(const Duration(milliseconds: 400));
-    // In production:
-    // await FirebaseAuth.instance.signOut();
-  }
-
-  // ==========================================
-  // Firestore Database Placeholders
-  // ==========================================
-
-  /// Fetch a document from a collection
-  Future<Map<String, dynamic>?> getDocument(String collection, String docId) async {
-    debugPrint('Firestore: Fetching document $docId from collection $collection...');
-    await Future.delayed(const Duration(milliseconds: 300));
-    
-    // In production:
-    // DocumentSnapshot doc = await FirebaseFirestore.instance.collection(collection).doc(docId).get();
-    // return doc.data();
-
-    // Mock data based on collections
-    if (collection == 'users') {
-      return {
-        'uid': 'mock_user_123',
+    if (!_userDocs.containsKey(uid)) {
+      _userDocs[uid] = {
+        'uid': uid,
+        'username': username,
+        'email': email,
         'level': 1,
         'xp': 0,
         'rank': 'Novice Coder',
@@ -92,15 +77,51 @@ class FirebaseService {
         'achievements': <String>[],
       };
     }
+
+    authStateNotifier.value = user;
+    return user;
+  }
+
+  /// Sign Out
+  Future<void> signOut() async {
+    debugPrint('Firebase Auth: Signing out user...');
+    await Future.delayed(const Duration(milliseconds: 300));
+    authStateNotifier.value = null;
+  }
+
+  // ==========================================
+  // Firestore Database Placeholders
+  // ==========================================
+
+  // In-memory collection simulation to store profiles separately by dynamic UID
+  final Map<String, Map<String, dynamic>> _userDocs = {};
+
+  /// Fetch a document from a collection
+  Future<Map<String, dynamic>?> getDocument(String collection, String docId) async {
+    debugPrint('Firestore: Fetching document $docId from collection $collection...');
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (collection == 'users') {
+      if (!_userDocs.containsKey(docId)) {
+        _userDocs[docId] = {
+          'uid': docId,
+          'username': 'WarriorOne',
+          'email': 'player@play2code.edu',
+          'level': 1,
+          'xp': 0,
+          'rank': 'Novice Coder',
+          'completedWorldsCount': 0,
+          'achievements': <String>[],
+        };
+      }
+      return _userDocs[docId];
+    }
     return null;
   }
 
   /// Stream updates for a collection
   Stream<List<Map<String, dynamic>>> collectionStream(String collection) {
     debugPrint('Firestore: Listening to collection $collection...');
-    
-    // In production:
-    // return FirebaseFirestore.instance.collection(collection).snapshots().map((snap) => snap.docs.map((d) => d.data()).toList());
     
     if (collection == 'worlds') {
       return Stream.value([
@@ -139,9 +160,24 @@ class FirebaseService {
   /// Update user progress data
   Future<void> updateDocument(String collection, String docId, Map<String, dynamic> data) async {
     debugPrint('Firestore: Updating document $docId in $collection with data: $data');
-    await Future.delayed(const Duration(milliseconds: 400));
-    // In production:
-    // await FirebaseFirestore.instance.collection(collection).doc(docId).update(data);
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    if (collection == 'users') {
+      if (!_userDocs.containsKey(docId)) {
+        _userDocs[docId] = {
+          'uid': docId,
+          'level': 1,
+          'xp': 0,
+          'rank': 'Novice Coder',
+          'completedWorldsCount': 0,
+          'achievements': <String>[],
+        };
+      }
+      _userDocs[docId] = {
+        ..._userDocs[docId]!,
+        ...data,
+      };
+    }
   }
 
   // ==========================================

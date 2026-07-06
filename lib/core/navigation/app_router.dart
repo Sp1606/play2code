@@ -13,6 +13,8 @@ import '../../features/worlds/presentation/pages/play_launcher_page.dart';
 import '../../features/home/presentation/pages/shop_page.dart';
 import '../../features/home/presentation/pages/arena_challenge_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/auth_page.dart';
+import '../services/firebase_service.dart';
 import '../theme/gaming_colors.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -21,6 +23,19 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(d
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/home',
+  refreshListenable: FirebaseService.instance.authStateNotifier,
+  redirect: (BuildContext context, GoRouterState state) {
+    final isLoggedIn = FirebaseService.instance.authStateNotifier.value != null;
+    final isLoggingIn = state.uri.path == '/login';
+
+    if (!isLoggedIn && !isLoggingIn) {
+      return '/login';
+    }
+    if (isLoggedIn && isLoggingIn) {
+      return '/home';
+    }
+    return null;
+  },
   routes: <RouteBase>[
     // Main App Shell with Bottom Navigation (5 Tabs)
     ShellRoute(
@@ -110,6 +125,12 @@ final GoRouter appRouter = GoRouter(
       path: '/reveal',
       builder: (BuildContext context, GoRouterState state) {
         return const RevealTheoryPage();
+      },
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (BuildContext context, GoRouterState state) {
+        return const AuthPage();
       },
     ),
   ],

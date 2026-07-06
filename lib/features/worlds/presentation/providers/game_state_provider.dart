@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'progress_provider.dart';
 
 class GameState {
   final int coins;
@@ -34,7 +35,9 @@ class GameState {
 }
 
 class GameStateNotifier extends StateNotifier<GameState> {
-  GameStateNotifier()
+  final String _uid;
+
+  GameStateNotifier(this._uid)
       : super(const GameState(
           coins: 0,
           gems: 0,
@@ -45,11 +48,11 @@ class GameStateNotifier extends StateNotifier<GameState> {
     loadState();
   }
 
-  static const String _keyCoins = 'play2code_coins';
-  static const String _keyGems = 'play2code_gems';
-  static const String _keyEnergy = 'play2code_energy';
-  static const String _keyXp = 'play2code_xp';
-  static const String _keyLevel = 'play2code_level';
+  String get _keyCoins => 'play2code_${_uid}_coins';
+  String get _keyGems => 'play2code_${_uid}_gems';
+  String get _keyEnergy => 'play2code_${_uid}_energy';
+  String get _keyXp => 'play2code_${_uid}_xp';
+  String get _keyLevel => 'play2code_${_uid}_level';
 
   Future<void> loadState() async {
     final prefs = await SharedPreferences.getInstance();
@@ -78,13 +81,12 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   Future<void> awardLevelCompletion(int levelIndex) async {
-    // Award 100 XP, 50 coins, 10 gems
     int newXp = state.xp + 100;
     int newLevel = state.level;
     int coinsAwarded = 50;
     int gemsAwarded = 10;
 
-    // Check level up (every 100 XP is a level)
+    // Check level up (100 XP per level)
     if (newXp >= 100) {
       newXp = newXp - 100;
       newLevel += 1;
@@ -172,5 +174,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
 }
 
 final gameStateProvider = StateNotifierProvider<GameStateNotifier, GameState>((ref) {
-  return GameStateNotifier();
+  final authState = ref.watch(authStateProvider);
+  final uid = authState?['uid'] ?? 'guest_user';
+  return GameStateNotifier(uid);
 });

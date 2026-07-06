@@ -17,7 +17,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     if (data == null) {
       throw Exception('User profile not found in database');
     }
-    return UserProfileModel.fromJson(data, email: 'player@play2code.edu', username: 'CodeWarrior');
+    return UserProfileModel.fromJson(data);
   }
 
   @override
