@@ -8,7 +8,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
       extensions: const <ThemeExtension<dynamic>>[
         GamingThemeExtension(
           xpColor: GamingColors.xpColor,
