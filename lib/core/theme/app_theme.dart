@@ -29,7 +29,7 @@ class AppTheme {
       ],
       primaryColor: GamingColors.primary,
       scaffoldBackgroundColor: GamingColors.background,
-      colorScheme: const ColorScheme.light(
+      colorScheme: const ColorScheme.dark(
         primary: GamingColors.primary,
         secondary: GamingColors.secondary,
         surface: GamingColors.surface,

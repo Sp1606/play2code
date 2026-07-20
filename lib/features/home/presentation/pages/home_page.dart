@@ -18,13 +18,28 @@ class _HomePageState extends ConsumerState<HomePage> {
       backgroundColor: GamingColors.background,
       body: Column(
         children: [
-          _buildTopBar(),
+          _buildTopBar(context),
           Expanded(
-            child: Row(
-              children: [
-                Expanded(flex: 1, child: _buildEditorPane()),
-                Expanded(flex: 1, child: _buildGamePreviewPane()),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth > 800) {
+                  return Row(
+                    children: [
+                      Expanded(flex: 1, child: _buildEditorPane()),
+                      Expanded(flex: 1, child: _buildGamePreviewPane()),
+                    ],
+                  );
+                } else {
+                  return SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 500, child: _buildEditorPane()),
+                        SizedBox(height: 500, child: _buildGamePreviewPane()),
+                      ],
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ],
@@ -32,12 +47,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     final profileState = ref.watch(userProfileProvider);
+    final isDesktop = MediaQuery.of(context).size.width > 800;
     
     return Container(
       height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
         color: GamingColors.surface,
         border: Border(bottom: BorderSide(color: GamingColors.surfaceLight)),
@@ -60,20 +76,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                 'CODEQUEST',
                 style: TextStyle(
                   color: GamingColors.textPrimary,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 48),
-          // Nav Links
-          _buildNavTab('EDITOR', true),
-          _buildNavTab('DASHBOARD', false),
-          _buildNavTab('QUESTS', false),
-          _buildNavTab('COMMUNITY', false),
-          _buildNavTab('SHOP', false),
+          if (isDesktop) ...[
+            const SizedBox(width: 48),
+            // Nav Links
+            _buildNavTab('EDITOR', true),
+            _buildNavTab('DASHBOARD', false),
+            _buildNavTab('QUESTS', false),
+            _buildNavTab('COMMUNITY', false),
+            _buildNavTab('SHOP', false),
+          ],
           const Spacer(),
           // Profile
           profileState.when(
@@ -83,23 +101,27 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundImage: NetworkImage(profile.avatarUrl),
+                  backgroundColor: GamingColors.surfaceLight,
+                  // Use a local icon fallback instead of network image if failing
+                  child: const Icon(Icons.person, size: 16, color: GamingColors.textPrimary),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile.username.toUpperCase(),
-                      style: const TextStyle(color: GamingColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'LEVEL ${profile.level}, ${profile.xp} XP',
-                      style: const TextStyle(color: GamingColors.textMuted, fontSize: 10),
-                    ),
-                  ],
-                ),
+                if (isDesktop) ...[
+                  const SizedBox(width: 12),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile.username.toUpperCase(),
+                        style: const TextStyle(color: GamingColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'LEVEL ${profile.level}, ${profile.xp} XP',
+                        style: const TextStyle(color: GamingColors.textMuted, fontSize: 10),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(width: 16),
                 const Icon(Icons.settings_outlined, color: GamingColors.textMuted, size: 20),
               ],
@@ -339,10 +361,10 @@ class PLAYER_MOVEMENT {
                         color: const Color(0xFF020617), // Deepest slate blue
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: GamingColors.surfaceLight),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&auto=format&fit=crop'),
-                          fit: BoxFit.cover,
-                          opacity: 0.6,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF0F172A), Color(0xFF1E1B4B)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
                       ),
                       child: Center(
@@ -395,32 +417,29 @@ class PLAYER_MOVEMENT {
           ),
           const SizedBox(height: 16),
           // Gamification Stats Box
-          Expanded(
-            flex: 1,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: GamingColors.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: GamingColors.surfaceLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'GAMIFICATION STATS',
-                    style: TextStyle(color: GamingColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const Divider(color: GamingColors.surfaceLight, height: 32),
-                  _buildStatRow('Current Task:', 'Jump Mechanics (Completed: 6/10)', GamingColors.textPrimary),
-                  const SizedBox(height: 12),
-                  _buildStatRow('Achievement:', '"Neon Walker" Unlocked! 🏆', GamingColors.textPrimary),
-                  const SizedBox(height: 12),
-                  _buildStatRow('Points:', '+150 XP', GamingColors.primary),
-                  const SizedBox(height: 12),
-                  _buildStatRow('Streak:', '7 Days', GamingColors.textPrimary),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: GamingColors.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: GamingColors.surfaceLight),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'GAMIFICATION STATS',
+                  style: TextStyle(color: GamingColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const Divider(color: GamingColors.surfaceLight, height: 32),
+                _buildStatRow('Current Task:', 'Jump Mechanics (Completed: 6/10)', GamingColors.textPrimary),
+                const SizedBox(height: 12),
+                _buildStatRow('Achievement:', '"Neon Walker" Unlocked! 🏆', GamingColors.textPrimary),
+                const SizedBox(height: 12),
+                _buildStatRow('Points:', '+150 XP', GamingColors.primary),
+                const SizedBox(height: 12),
+                _buildStatRow('Streak:', '7 Days', GamingColors.textPrimary),
+              ],
             ),
           ),
         ],
