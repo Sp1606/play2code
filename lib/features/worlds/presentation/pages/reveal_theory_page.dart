@@ -33,10 +33,20 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
   bool _searchCompleted = false;
   String _searchFeedback = 'Press "Step Search" to simulate binary division.';
 
+  // --- Mobile System Design State ---
+  String _selectedHldLayer = 'None';
+  String _hldLayerDetails = 'Tap any HLD layer box above to analyze its core engineering responsibility and interview trade-offs.';
+  String _selectedRealtimeScenario = 'Chat App';
+  bool _isOfflineMode = false;
+  final List<String> _localDatabase = ['Post 1: Welcome to Play2Code'];
+  final List<String> _syncQueue = [];
+  bool _isSyncing = false;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // 4 Tabs: Stack, Queue, Binary Search, and System Design
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -101,7 +111,6 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
       _searchMid = -1;
       _searchStep = 0;
       _searchCompleted = false;
-      // pick a random value from the array as target
       _searchTarget = _searchArray[Random().nextInt(_searchArray.length)];
       _searchFeedback = 'Search rebooted. Target code is $_searchTarget.';
     });
@@ -136,6 +145,69 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
     });
   }
 
+  // --- SYSTEM DESIGN ACTIONS ---
+  void _selectHldLayer(String layer) {
+    setState(() {
+      _selectedHldLayer = layer;
+      switch (layer) {
+        case 'UI Layer':
+          _hldLayerDetails = 'UI Layer:\n• Handles rendering and user gestures (screens, buttons, compose views).\n• Observes state. Must remain thin and dumb—no network or business logic should live here.';
+          break;
+        case 'Business Layer':
+          _hldLayerDetails = 'Business Logic Layer:\n• Houses ViewModels and Domain logic (use cases, algorithms, routing rules).\n• No Android/iOS platform framework dependencies allowed to guarantee testability.';
+          break;
+        case 'Data Layer':
+          _hldLayerDetails = 'Data Layer (Repositories):\n• The Single Source of Truth. Combines local database caching and remote network APIs.\n• Abstract contracts hide data retrieval details from business logic.';
+          break;
+        case 'Network/DB Engine':
+          _hldLayerDetails = 'Network & Database engines:\n• Sockets, SQL, cache eviction (LRU), and HTTP engines.\n• Implements retries, timeouts, offline synchronization queues, and cache policies.';
+          break;
+        default:
+          _hldLayerDetails = 'Tap any HLD layer box above to analyze its core engineering responsibility.';
+      }
+    });
+  }
+
+  void _toggleNetworkMode() {
+    setState(() {
+      _isOfflineMode = !_isOfflineMode;
+    });
+  }
+
+  void _addPostOffline() {
+    final text = 'Post ${_localDatabase.length + _syncQueue.length + 1}: Offline update';
+    setState(() {
+      // Optimistic update: instantly render locally
+      _localDatabase.add('$text (Pending Sync)');
+      _syncQueue.add(text);
+    });
+  }
+
+  Future<void> _triggerSyncQueue() async {
+    if (_isOfflineMode || _syncQueue.isEmpty || _isSyncing) return;
+
+    setState(() {
+      _isSyncing = true;
+    });
+
+    for (int i = 0; i < _syncQueue.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (_isOfflineMode) {
+        setState(() => _isSyncing = false);
+        return; // aborted due to offline toggling
+      }
+    }
+
+    setState(() {
+      // Confirm all pending sync items in database
+      for (int i = 0; i < _localDatabase.length; i++) {
+        _localDatabase[i] = _localDatabase[i].replaceAll(' (Pending Sync)', '');
+      }
+      _syncQueue.clear();
+      _isSyncing = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,10 +218,12 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
           indicatorColor: GamingColors.accent,
           labelColor: GamingColors.accent,
           unselectedLabelColor: GamingColors.textMuted,
+          isScrollable: true,
           tabs: const [
             Tab(text: 'STACK (LIFO)'),
             Tab(text: 'QUEUE (FIFO)'),
             Tab(text: 'BINARY SEARCH'),
+            Tab(text: 'SYSTEM DESIGN'),
           ],
         ),
       ),
@@ -159,6 +233,7 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
           _buildStackTab(),
           _buildQueueTab(),
           _buildSearchTab(),
+          _buildSystemDesignTab(),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -182,7 +257,6 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Definition
           const GameCard(
             title: 'STACK DEFINITION',
             borderColor: GamingColors.primary,
@@ -192,8 +266,6 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
             ),
           ),
           const SizedBox(height: 16),
-
-          // Visual Simulator
           GameCard(
             title: 'INTERACTIVE VISUALIZER',
             child: Column(
@@ -250,8 +322,6 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
             ),
           ),
           const SizedBox(height: 16),
-
-          // Real-World Analogy & Complexities
           const GameCard(
             title: 'REAL-WORLD ANALOGY',
             child: Text(
@@ -260,7 +330,6 @@ class _RevealTheoryPageState extends State<RevealTheoryPage> with SingleTickerPr
             ),
           ),
           const SizedBox(height: 16),
-
           _buildCodeBlock('''// Dart Stack Implementation
 class Stack<T> {
   final List<T> _storage = [];
@@ -287,7 +356,6 @@ class Stack<T> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Definition
           const GameCard(
             title: 'QUEUE DEFINITION',
             borderColor: GamingColors.secondary,
@@ -297,8 +365,6 @@ class Stack<T> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Visual Simulator
           GameCard(
             title: 'INTERACTIVE VISUALIZER',
             child: Column(
@@ -363,8 +429,6 @@ class Stack<T> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Real-World Analogy
           const GameCard(
             title: 'REAL-WORLD ANALOGY',
             child: Text(
@@ -373,7 +437,6 @@ class Stack<T> {
             ),
           ),
           const SizedBox(height: 16),
-
           _buildCodeBlock('''// Dart Queue Implementation
 class Queue<T> {
   final List<T> _storage = [];
@@ -400,7 +463,6 @@ class Queue<T> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Definition
           const GameCard(
             title: 'BINARY SEARCH DEFINITION',
             borderColor: GamingColors.accent,
@@ -410,8 +472,6 @@ class Queue<T> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Visual Simulator
           GameCard(
             title: 'INTERACTIVE VISUALIZER',
             child: Column(
@@ -426,7 +486,6 @@ class Queue<T> {
                 const SizedBox(height: 8),
                 Text(_searchFeedback, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: GamingColors.accent)),
                 const SizedBox(height: 16),
-                // Matrix cells
                 Wrap(
                   spacing: 4,
                   runSpacing: 4,
@@ -492,8 +551,6 @@ class Queue<T> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Real-World Analogy
           const GameCard(
             title: 'REAL-WORLD ANALOGY',
             child: Text(
@@ -502,7 +559,6 @@ class Queue<T> {
             ),
           ),
           const SizedBox(height: 16),
-
           _buildCodeBlock('''// Dart Binary Search Implementation
 int binarySearch(List<int> sorted, int target) {
   int low = 0;
@@ -521,6 +577,285 @@ int binarySearch(List<int> sorted, int target) {
   }
   return -1; // Not found
 }'''),
+        ],
+      ),
+    );
+  }
+
+  // ==================== SYSTEM DESIGN TAB ====================
+  Widget _buildSystemDesignTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Definition Header
+          const GameCard(
+            title: 'MOBILE SYSTEM DESIGN',
+            borderColor: GamingColors.primary,
+            child: Text(
+              'System design for mobile focus on architectural choices under resource constraints (low battery, weak 3G signals, memory, and lifecycle kills). Here is how a production app is built.',
+              style: TextStyle(fontSize: 13, height: 1.4, color: GamingColors.textPrimary),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 1. High-Level Design (HLD) Layers Explorer
+          GameCard(
+            title: '1. INTERACTIVE HLD ARCHITECTURE MAP',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHldLayerButton('UI Layer', GamingColors.primary),
+                const Icon(Icons.arrow_downward, color: Colors.white24, size: 16),
+                _buildHldLayerButton('Business Layer', GamingColors.secondary),
+                const Icon(Icons.arrow_downward, color: Colors.white24, size: 16),
+                _buildHldLayerButton('Data Layer', GamingColors.warning),
+                const Icon(Icons.arrow_downward, color: Colors.white24, size: 16),
+                _buildHldLayerButton('Network/DB Engine', GamingColors.accent),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Text(
+                    _hldLayerDetails,
+                    style: const TextStyle(fontSize: 11, height: 1.5, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 2. Real-Time Protocol Matrix Selector
+          GameCard(
+            title: '2. REAL-TIME PROTOCOL DECISION MATRIX',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Select a real-time scenario to choose the correct connection protocol:',
+                  style: TextStyle(fontSize: 11, color: Colors.white54),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildScenarioChip('Chat App'),
+                    _buildScenarioChip('Live Scores'),
+                    _buildScenarioChip('News Feed'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildProtocolDecisionDetails(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 3. Offline-First Optimistic Sync Simulator
+          GameCard(
+            title: '3. OFFLINE-FIRST OPTIMISTIC SYNC SIMULATOR',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _isOfflineMode ? Icons.cloud_off : Icons.cloud_done,
+                          color: _isOfflineMode ? GamingColors.error : GamingColors.accent,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isOfflineMode ? 'NETWORK: OFFLINE' : 'NETWORK: ONLINE',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _isOfflineMode ? GamingColors.error : GamingColors.accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Switch(
+                      value: !_isOfflineMode,
+                      activeThumbColor: GamingColors.accent,
+                      inactiveThumbColor: GamingColors.error,
+                      onChanged: (val) {
+                        _toggleNetworkMode();
+                        if (val) {
+                          _triggerSyncQueue();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('LOCAL DATABASE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white54)),
+                          const SizedBox(height: 6),
+                          Container(
+                            height: 100,
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
+                            child: ListView(
+                              children: _localDatabase.map((post) {
+                                return Text(post, style: const TextStyle(fontSize: 10, color: Colors.white70));
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('OFFLINE SYNC QUEUE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white54)),
+                          const SizedBox(height: 6),
+                          Container(
+                            height: 100,
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
+                            child: _syncQueue.isEmpty
+                                ? const Center(child: Text('Queue empty', style: TextStyle(fontSize: 9, color: Colors.white24)))
+                                : ListView(
+                                    children: _syncQueue.map((post) {
+                                      return Text(post, style: const TextStyle(fontSize: 10, color: GamingColors.warning));
+                                    }).toList(),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GameButton(
+                        height: 36,
+                        label: 'ADD POST',
+                        onPressed: _addPostOffline,
+                        color: GamingColors.primary,
+                      ),
+                    ),
+                    if (!_isOfflineMode && _syncQueue.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GameButton(
+                          height: 36,
+                          label: _isSyncing ? 'SYNCING...' : 'SYNC QUEUE',
+                          onPressed: _isSyncing ? null : _triggerSyncQueue,
+                          color: GamingColors.accent,
+                        ),
+                      ),
+                    ]
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHldLayerButton(String label, Color color) {
+    final isSelected = _selectedHldLayer == label;
+    return GestureDetector(
+      onTap: () => _selectHldLayer(label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? color : GamingColors.surfaceLight,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color, width: isSelected ? 2 : 1),
+          boxShadow: isSelected ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8)] : null,
+        ),
+        child: Center(
+          child: Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScenarioChip(String label) {
+    final isSelected = _selectedRealtimeScenario == label;
+    return ChoiceChip(
+      label: Text(label, style: TextStyle(fontSize: 10, color: isSelected ? Colors.white : Colors.white70)),
+      selected: isSelected,
+      selectedColor: GamingColors.accent,
+      backgroundColor: GamingColors.surfaceLight,
+      onSelected: (val) {
+        if (val) {
+          setState(() {
+            _selectedRealtimeScenario = label;
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildProtocolDecisionDetails() {
+    String recommendation = '';
+    String why = '';
+    switch (_selectedRealtimeScenario) {
+      case 'Chat App':
+        recommendation = 'Protocol Recommended: WebSockets';
+        why = '• Bi-directional real-time communication: Users must push messages and receive updates concurrently.\n• Minimal connection handshakes: Connection stays open continually.';
+        break;
+      case 'Live Scores':
+        recommendation = 'Protocol Recommended: Server-Sent Events (SSE)';
+        why = '• Uni-directional flow: Client only receives score updates. No push events required.\n• Saves battery compared to polling since the radio stays warm only during active frame updates.';
+        break;
+      case 'News Feed':
+      default:
+        recommendation = 'Protocol Recommended: HTTP Polling (or Pull-to-Refresh)';
+        why = '• Low real-time dependency: Algorithmic ranking loads feed posts once. Updates do not change second-to-second.\n• Most efficient battery saver: Cuts radio usage entirely between fetches.';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            recommendation,
+            style: const TextStyle(fontWeight: FontWeight.bold, color: GamingColors.accent, fontSize: 12),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            why,
+            style: const TextStyle(fontSize: 10, height: 1.4, color: Colors.white70),
+          ),
         ],
       ),
     );

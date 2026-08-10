@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/theme/gaming_colors.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 
@@ -96,7 +95,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           // Profile
           profileState.when(
             loading: () => const SizedBox(),
-            error: (_, __) => const SizedBox(),
+            error: (err, stack) => const SizedBox(),
             data: (profile) => Row(
               children: [
                 CircleAvatar(
